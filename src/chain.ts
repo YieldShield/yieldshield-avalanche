@@ -4,62 +4,164 @@ import {
   custom,
   http,
   parseAbi,
+  formatUnits,
+  parseUnits,
+  zeroAddress,
   type Address,
+  type Abi,
   type EIP1193Provider,
 } from "viem";
-import { avalancheFuji } from "viem/chains";
+import { avalancheFuji, foundry } from "viem/chains";
 import deployment from "../config/deployment.json";
-export const config = deployment as Omit<
-  typeof deployment,
-  | "backingToken"
-  | "scenarioPool"
-  | "referencePool"
-  | "scenarioOracle"
-  | "referenceOracle"
-> & {
-  backingToken: Address | null;
-  scenarioPool: Address | null;
-  referencePool: Address | null;
-  scenarioOracle: Address | null;
-  referenceOracle: Address | null;
-};
+import pool from "../config/abi/AlpinePool.json";
+import factory from "../config/abi/AlpineFactory.json";
+import exchange from "../config/abi/AlpineExchange.json";
+import vault from "../config/abi/AlpineDemoVault.json";
+import wrapper from "../config/abi/AlpineWrappedAVAX.json";
+import token from "../config/abi/AlpineDemoDollar.json";
+export const localMode =
+  import.meta.env.DEV && import.meta.env.VITE_LOCAL_DEMO === "true";
+export const config: Record<string, any> = localMode
+  ? JSON.parse(import.meta.env.VITE_LOCAL_MANIFEST)
+  : deployment;
+export const chain = localMode ? foundry : avalancheFuji;
 export const client = createPublicClient({
-  chain: avalancheFuji,
+  chain,
   transport: http(config.rpcUrl, { timeout: 12000, retryCount: 1 }),
 });
-export const poolAbi = parseAbi([
-  "function totalBacking() view returns (uint256)",
-  "function reservedBacking() view returns (uint256)",
-  "function protectedAvax() view returns (uint256)",
-  "function juniorAvax() view returns (uint256)",
-  "function totalShares() view returns (uint256)",
-  "function nextPositionId() view returns (uint256)",
-  "function shares(address) view returns (uint256)",
-  "function withdrawalReadyAt(address) view returns (uint256)",
-  "function maturity() view returns (uint256)",
-  "function claimableBacking(address) view returns (uint256)",
-  "function settleExpired(uint256 id)",
-  "function claimBacking()",
-  "function positions(uint256) view returns (address owner,uint256 amount,uint256 floor,uint256 openedAt)",
-  "function depositJunior(uint256 amount,uint256 minShares) returns (uint256)",
-  "function protect(uint256 minFloor,uint256 deadline) payable returns (uint256)",
-  "function requestJuniorWithdrawal()",
-  "function withdrawJunior(uint256 burn,uint256 minBacking,uint256 minAvax)",
-  "function exitAvax(uint256 id,uint256 minAvax)",
-  "function exitBacking(uint256 id)",
-  "event Protected(uint256 indexed id,address indexed owner,uint256 amount,uint256 floor)",
-]);
-export const tokenAbi = parseAbi([
-  "function balanceOf(address) view returns(uint256)",
-  "function allowance(address,address) view returns(uint256)",
-  "function approve(address,uint256) returns(bool)",
-  "function faucet()",
-  "function nextClaim(address) view returns(uint256)",
-]);
+export const poolAbi = pool as Abi,
+  factoryAbi = factory as Abi,
+  exchangeAbi = exchange as Abi,
+  vaultAbi = vault as Abi,
+  wrapperAbi = wrapper as Abi,
+  tokenAbi = token as Abi;
 export const oracleAbi = parseAbi(["function price() view returns(uint256)"]);
-export const feedAbi = parseAbi([
-  "function latestRoundData() view returns(uint80,int256,uint256,uint256,uint80)",
-]);
+export const read = async (
+  address: Address,
+  abi: Abi,
+  name: string,
+  args: readonly unknown[] = [],
+): Promise<any> =>
+  client.readContract({ address, abi, functionName: name, args });
+export const short = (s: string) => `${s.slice(0, 6)}…${s.slice(-4)}`;
+export const explorer = (type: "address" | "tx", id: string) =>
+  `${config.explorer}/${type}/${id}`;
+export const fmt = (value: bigint, decimals = 6, digits = 4) =>
+  Number(formatUnits(value, decimals)).toLocaleString("en-US", {
+    maximumFractionDigits: digits,
+  });
+export function units(value: string, decimals = 18) {
+  if (
+    !/^\d+(\.\d*)?$/.test(value) ||
+    (value.split(".")[1] || "").length > decimals
+  )
+    throw new Error(
+      `Enter a positive amount with at most ${decimals} decimal places.`,
+    );
+  const n = parseUnits(value, decimals);
+  if (n <= 0n) throw new Error("Amount must be greater than zero.");
+  return n;
+}
+export const ZERO = zeroAddress;
+export const DEFAULT_TERMS = {
+  collateralBps: 15000,
+  juniorFeeBps: 1000,
+  creatorFeeBps: 100,
+  epochSeconds: 604800,
+  exitDelay: 60,
+  juniorNotice: 120,
+};
+export type AssetKey = "native" | "wrapped" | "vault";
+export const assets = [
+  {
+    key: "native" as AssetKey,
+    symbol: "AVAX",
+    name: "Native Fuji AVAX",
+    address: ZERO,
+    decimals: 18,
+    description: "Fuji gas token. Native transfers; valueless test network.",
+  },
+  {
+    key: "wrapped" as AssetKey,
+    symbol: "awAVAX",
+    name: "Alpine Test Wrapped AVAX",
+    address: config.wrapper as Address | null,
+    decimals: 18,
+    description:
+      "Actually backed 1:1 by deposited Fuji AVAX. An Alpine test wrapper, not canonical WAVAX.",
+  },
+  {
+    key: "vault" as AssetKey,
+    symbol: "vaDEMO",
+    name: "Alpine Demo Vault",
+    address: config.vault as Address | null,
+    decimals: 18,
+    description:
+      "Funded ERC-4626 aDEMO vault receipts. Value comes from assets held by this vault; no promised yield.",
+  },
+];
+export type Market = {
+  key: string;
+  name: string;
+  asset: AssetKey;
+  address: Address | null;
+  backing: Address | null;
+  backingSymbol: string;
+  oracle: Address | null;
+  source: string;
+};
+export const featured: Market[] = [
+  {
+    key: "reference",
+    name: "AVAX reference",
+    asset: "native",
+    address: config.referencePool,
+    backing: config.backingToken,
+    backingSymbol: "aDEMO",
+    oracle: config.referenceOracle,
+    source: "Chainlink AVAX/USD",
+  },
+  {
+    key: "wrapped",
+    name: "Wrapped AVAX",
+    asset: "wrapped",
+    address: config.wrappedPool,
+    backing: config.backingToken,
+    backingSymbol: "aDEMO",
+    oracle: config.referenceOracle,
+    source: "Chainlink AVAX/USD",
+  },
+  {
+    key: "vault",
+    name: "Funded vault",
+    asset: "vault",
+    address: config.vaultPool,
+    backing: config.backingToken,
+    backingSymbol: "aDEMO",
+    oracle: config.vaultOracle,
+    source: "Vault redemption backing",
+  },
+  {
+    key: "vault-backed",
+    name: "AVAX · vault collateral",
+    asset: "native",
+    address: config.vaultBackingPool,
+    backing: config.backingVault,
+    backingSymbol: "bvaDEMO",
+    oracle: null,
+    source: "Chainlink / vault redemption backing",
+  },
+  {
+    key: "scenario",
+    name: "AVAX scenario lab",
+    asset: "native",
+    address: config.scenarioPool,
+    backing: config.backingToken,
+    backingSymbol: "aDEMO",
+    oracle: config.scenarioOracle,
+    source: "Synthetic 25 → 35 → 15 cycle",
+  },
+];
 declare global {
   interface Window {
     ethereum?: EIP1193Provider & {
@@ -74,25 +176,19 @@ declare global {
 export async function wallet() {
   if (!window.ethereum)
     throw new Error(
-      "Open this app in Core or another Ethereum-compatible wallet browser, or install its browser extension.",
+      "Install Core or an Ethereum-compatible wallet to connect.",
     );
-  const w = createWalletClient({
-    chain: avalancheFuji,
-    transport: custom(window.ethereum),
-  });
+  const w = createWalletClient({ chain, transport: custom(window.ethereum) });
   const [account] = await w.requestAddresses();
   try {
-    await w.switchChain({ id: 43113 });
-  } catch (error: any) {
-    if (error?.code === 4902 || error?.cause?.code === 4902) {
-      await w.addChain({ chain: avalancheFuji });
-      await w.switchChain({ id: 43113 });
-    } else throw error;
+    await w.switchChain({ id: chain.id });
+  } catch (e: any) {
+    if (e?.code === 4902 || e?.cause?.code === 4902) {
+      await w.addChain({ chain });
+      await w.switchChain({ id: chain.id });
+    } else throw e;
   }
-  if ((await w.getChainId()) !== 43113)
-    throw new Error("Switch your wallet to Avalanche Fuji before continuing.");
+  if ((await w.getChainId()) !== chain.id)
+    throw new Error(`Switch to ${chain.name}.`);
   return { w, account };
 }
-export const short = (s: string) => `${s.slice(0, 6)}…${s.slice(-4)}`;
-export const explorer = (type: "address" | "tx", id: string) =>
-  `${config.explorer}/${type}/${id}`;

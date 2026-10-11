@@ -1,0 +1,458 @@
+import {
+  createContext,
+  useContext,
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  type ReactNode,
+} from "react";
+import { type Address, type Abi, type Hash, zeroAddress } from "viem";
+import {
+  client,
+  config,
+  chain,
+  read,
+  wallet,
+  poolAbi,
+  tokenAbi,
+  factoryAbi,
+  oracleAbi,
+  featured,
+  assets,
+  DEFAULT_TERMS,
+  type Market,
+} from "./chain";
+import { safeError } from "./math.mjs";
+export type Position = {
+  id: bigint;
+  owner: Address;
+  amount: bigint;
+  floor: bigint;
+  openedAt: bigint;
+};
+export type Snapshot = {
+  backing: bigint;
+  reserved: bigint;
+  inventory: bigint;
+  totalShares: bigint;
+  ownShares: bigint;
+  ready: bigint;
+  earned: bigint;
+  fees: bigint;
+  claimable: bigint;
+  price: bigint | null;
+  oracleError: string;
+  capacity: bigint;
+  nav: bigint | null;
+  maturity: bigint;
+  positions: Position[];
+  terms: typeof DEFAULT_TERMS;
+};
+export type Activity = {
+  hash: Hash;
+  label: string;
+  account: Address;
+  chainId: number;
+  status: "pending" | "confirmed" | "failed" | "unknown";
+  time: number;
+};
+const Context = createContext<any>(null);
+export const useAlpine = () =>
+  useContext(Context) as {
+    account: Address | null;
+    identity: number;
+    busy: boolean;
+    message: string;
+    activity: Activity[];
+    markets: Market[];
+    snapshots: Record<string, Snapshot>;
+    balances: Record<string, bigint>;
+    loading: boolean;
+    errors: Record<string, string>;
+    connect: () => Promise<void>;
+    refresh: () => Promise<void>;
+    transact: (
+      label: string,
+      address: Address,
+      abi: Abi,
+      functionName: string,
+      args?: readonly unknown[],
+      value?: bigint,
+    ) => Promise<any>;
+    approve: (
+      token: Address,
+      spender: Address,
+      amount: bigint,
+    ) => Promise<void>;
+    setMessage: (s: string) => void;
+    ready: boolean;
+  };
+const stored = () => {
+  try {
+    return JSON.parse(
+      localStorage.getItem("alpine-activity-v2") || "[]",
+    ) as Activity[];
+  } catch {
+    return [];
+  }
+};
+export function AlpineProvider({ children }: { children: ReactNode }) {
+  const [account, setAccount] = useState<Address | null>(null),
+    [identity, setIdentity] = useState(0),
+    [busy, setBusy] = useState(false),
+    [message, setMessage] = useState(""),
+    [markets, setMarkets] = useState<Market[]>(featured),
+    [snapshots, setSnapshots] = useState<Record<string, Snapshot>>({}),
+    [balances, setBalances] = useState<Record<string, bigint>>({}),
+    [errors, setErrors] = useState<Record<string, string>>({}),
+    [loading, setLoading] = useState(false),
+    [activity, setActivity] = useState<Activity[]>(stored);
+  const generation = useRef(0),
+    currentAccount = useRef<Address | null>(null);
+  const ready = Boolean(
+    config.factory && config.referencePool && config.backingToken,
+  );
+  useEffect(() => {
+    localStorage.setItem(
+      "alpine-activity-v2",
+      JSON.stringify(activity.slice(0, 100)),
+    );
+  }, [activity]);
+  useEffect(() => {
+    const provider = window.ethereum;
+    const reset = () => {
+      generation.current++;
+      currentAccount.current = null;
+      setAccount(null);
+      setSnapshots({});
+      setBalances({});
+      setIdentity((x) => x + 1);
+      setMessage(
+        "Wallet account or network changed. Reconnect and review a fresh quote.",
+      );
+    };
+    provider?.on?.("accountsChanged", reset);
+    provider?.on?.("chainChanged", reset);
+    return () => {
+      provider?.removeListener?.("accountsChanged", reset);
+      provider?.removeListener?.("chainChanged", reset);
+    };
+  }, []);
+  const refresh = useCallback(async () => {
+    if (!ready) return;
+    const generationAtStart = generation.current,
+      owner = currentAccount.current;
+    setLoading(true);
+    let catalog = [...featured];
+    const issues: Record<string, string> = {};
+    try {
+      const registry = (await read(
+        config.factory,
+        factoryAbi,
+        "allPools",
+      )) as Address[];
+      for (const address of registry) {
+        if (
+          catalog.some(
+            (m) => m.address?.toLowerCase() === address.toLowerCase(),
+          )
+        )
+          continue;
+        const [asset, backing, oracle] = await Promise.all(
+          ["protectedToken", "backing", "oracle"].map((n) =>
+            read(address, poolAbi, n),
+          ),
+        );
+        const item = assets.find(
+          (a) => a.address?.toLowerCase() === asset.toLowerCase(),
+        );
+        if (!item) continue;
+        catalog.push({
+          key: address,
+          name: `Community ${item.symbol}`,
+          asset: item.key,
+          address,
+          backing,
+          backingSymbol:
+            backing.toLowerCase() === config.backingVault?.toLowerCase()
+              ? "bvaDEMO"
+              : "aDEMO",
+          oracle,
+          source: "Factory-approved oracle",
+        });
+      }
+    } catch (e) {
+      issues.registry = safeError(e);
+    }
+    const data: Record<string, Snapshot> = {};
+    await Promise.all(
+      catalog
+        .filter((m) => m.address)
+        .map(async (market) => {
+          try {
+            const address = market.address!;
+            const names = [
+              "totalBacking",
+              "reservedBacking",
+              "juniorInventory",
+              "totalShares",
+              "maturity",
+              "nextPositionId",
+              "oracle",
+              "terms",
+            ];
+            const values = await Promise.all(
+              names.map((n) => read(address, poolAbi, n)),
+            );
+            const [
+              backing,
+              reserved,
+              inventory,
+              totalShares,
+              maturity,
+              next,
+              oracle,
+              rawTerms,
+            ] = values;
+            const terms = Array.isArray(rawTerms)
+              ? Object.fromEntries(
+                  Object.keys(DEFAULT_TERMS).map((k, i) => [
+                    k,
+                    Number(rawTerms[i]),
+                  ]),
+                )
+              : rawTerms;
+            let price: bigint | null = null,
+              oracleError = "";
+            try {
+              price = await read(oracle, oracleAbi, "price");
+            } catch (e) {
+              oracleError = safeError(e);
+            }
+            const positions = (
+              await Promise.all(
+                Array.from({ length: Number(next) - 1 }, (_, i) =>
+                  read(address, poolAbi, "positions", [BigInt(i + 1)]).then(
+                    (p: any) => ({
+                      id: BigInt(i + 1),
+                      owner: p[0],
+                      amount: p[1],
+                      floor: p[2],
+                      openedAt: p[3],
+                    }),
+                  ),
+                ),
+              )
+            ).filter((p) => p.owner !== zeroAddress);
+            const personal = owner
+              ? await Promise.all(
+                  [
+                    "shares",
+                    "withdrawalReadyAt",
+                    "earned",
+                    "claimableFees",
+                    "claimableBacking",
+                  ].map((n) => read(address, poolAbi, n, [owner])),
+                )
+              : [0n, 0n, 0n, 0n, 0n];
+            data[market.key] = {
+              backing,
+              reserved,
+              inventory,
+              totalShares,
+              maturity,
+              positions,
+              price,
+              oracleError,
+              terms,
+              ownShares: personal[0],
+              ready: personal[1],
+              earned: personal[2],
+              fees: personal[3],
+              claimable: personal[4],
+              capacity:
+                (backing * 10000n) / BigInt(terms.collateralBps) > reserved
+                  ? (backing * 10000n) / BigInt(terms.collateralBps) - reserved
+                  : 0n,
+              nav:
+                inventory === 0n
+                  ? backing
+                  : price === null
+                    ? null
+                    : backing + (inventory * price) / 10n ** 18n,
+            };
+          } catch (e) {
+            issues[market.key] = safeError(e);
+          }
+        }),
+    );
+    const funds: Record<string, bigint> = {};
+    if (owner) {
+      await Promise.all(
+        [
+          ["native", null],
+          ["wrapped", config.wrapper],
+          ["vault", config.vault],
+          ["backing", config.backingToken],
+          ["backing-vault", config.backingVault],
+        ].map(async ([key, address]) => {
+          try {
+            funds[key!] = address
+              ? await read(address as Address, tokenAbi, "balanceOf", [owner])
+              : await client.getBalance({ address: owner });
+          } catch (e) {
+            issues.balance = safeError(e);
+          }
+        }),
+      );
+    }
+    if (generationAtStart === generation.current) {
+      setMarkets(catalog);
+      setSnapshots(data);
+      setBalances(funds);
+      setErrors(issues);
+      setLoading(false);
+    }
+  }, [ready]);
+  useEffect(() => {
+    void refresh();
+    const timer = setInterval(() => void refresh(), 20000);
+    return () => clearInterval(timer);
+  }, [refresh, account]);
+  async function connect() {
+    try {
+      const result = await wallet();
+      generation.current++;
+      currentAccount.current = result.account;
+      setAccount(result.account);
+      setIdentity((x) => x + 1);
+      setMessage("Wallet connected. Review each operation before signing.");
+    } catch (e) {
+      setMessage(safeError(e));
+    }
+  }
+  async function transact(
+    label: string,
+    address: Address,
+    abi: Abi,
+    functionName: string,
+    args: readonly unknown[] = [],
+    value?: bigint,
+  ) {
+    if (!ready) throw new Error("Fuji contracts are awaiting deployment.");
+    if (!currentAccount.current) throw new Error("Connect your wallet first.");
+    const expected = currentAccount.current;
+    setBusy(true);
+    let hash: Hash | undefined;
+    try {
+      const { w, account: active } = await wallet();
+      if (
+        active.toLowerCase() !== expected.toLowerCase() ||
+        currentAccount.current !== expected
+      )
+        throw new Error("Wallet changed. Review again.");
+      const request = {
+        address,
+        abi,
+        functionName,
+        args,
+        account: active,
+        value,
+        chain,
+      };
+      const simulation = await client.simulateContract(request);
+      hash = await w.writeContract(simulation.request as any);
+      setActivity((old) => [
+        {
+          hash: hash!,
+          label,
+          account: active,
+          chainId: chain.id,
+          status: "pending",
+          time: Date.now(),
+        },
+        ...old,
+      ]);
+      setMessage(`${label} submitted. Waiting for confirmation.`);
+      const receipt = await client.waitForTransactionReceipt({
+        hash,
+        timeout: 120000,
+      });
+      setActivity((old) =>
+        old.map((a) =>
+          a.hash === hash
+            ? {
+                ...a,
+                status: receipt.status === "success" ? "confirmed" : "failed",
+              }
+            : a,
+        ),
+      );
+      if (receipt.status !== "success")
+        throw new Error(
+          "Transaction reverted. No successful action was recorded.",
+        );
+      setMessage(`${label} confirmed.`);
+      await refresh().catch(() =>
+        setMessage(
+          `${label} confirmed. Data refresh failed; refresh the page to reload balances.`,
+        ),
+      );
+      return receipt;
+    } catch (e) {
+      if (hash)
+        setActivity((old) =>
+          old.map((a) =>
+            a.hash === hash && a.status === "pending"
+              ? { ...a, status: "unknown" }
+              : a,
+          ),
+        );
+      setMessage(
+        hash
+          ? `${safeError(e)} Transaction ${hash} may still confirm; check Activity before retrying.`
+          : safeError(e),
+      );
+      throw e;
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function approve(token: Address, spender: Address, amount: bigint) {
+    if (!currentAccount.current) throw new Error("Connect your wallet first.");
+    const allowance = await read(token, tokenAbi, "allowance", [
+      currentAccount.current,
+      spender,
+    ]);
+    if (allowance < amount)
+      await transact("Token allowance", token, tokenAbi, "approve", [
+        spender,
+        amount,
+      ]);
+  }
+  return (
+    <Context.Provider
+      value={{
+        account,
+        identity,
+        busy,
+        message,
+        setMessage,
+        activity,
+        markets,
+        snapshots,
+        balances,
+        errors,
+        loading,
+        connect,
+        refresh,
+        transact,
+        approve,
+        ready,
+      }}
+    >
+      {children}
+    </Context.Provider>
+  );
+}

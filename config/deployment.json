@@ -12,5 +12,15 @@
   "chainlinkFeed": "0x5498BB86BC934c8D34FDA08E81D444153d0D06aD",
   "circleFujiUsdc": "0x5425890298aed601595a70AB815c96711a31Bc65",
   "maxPriceAge": 1200,
-  "transactions": []
+  "transactions": [],
+  "wrapper": null,
+  "vault": null,
+  "backingVault": null,
+  "vaultOracle": null,
+  "factory": null,
+  "exchange": null,
+  "wrappedPool": null,
+  "vaultPool": null,
+  "vaultBackingPool": null,
+  "version": 2
 }
