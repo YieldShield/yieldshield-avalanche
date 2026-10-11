@@ -64,7 +64,11 @@ export function MarketSelect() {
   return (
     <label className="field-label">
       Choose a market
-      <select value={market.key} onChange={(e) => select(e.target.value)}>
+      <select
+        aria-label="Choose a market"
+        value={market.key}
+        onChange={(e) => select(e.target.value)}
+      >
         {markets.map((m) => (
           <option key={m.key} value={m.key}>
             {m.name} / {m.backingSymbol}

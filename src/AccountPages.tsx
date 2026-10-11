@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   config,
   assets,
@@ -154,6 +155,7 @@ export function Activity() {
   );
 }
 export function Faucet() {
+  const [params] = useSearchParams();
   const { account, identity, transact, balances } = useAlpine();
   const [next, setNext] = useState<bigint | null>(null),
     [error, setError] = useState("");
@@ -227,10 +229,16 @@ export function Faucet() {
             Open Avalanche faucet ↗
           </a>
           <div className="button-row">
-            <RouteLink className="secondary-button" to="/trade">
-              Buy an asset
+            <RouteLink
+              className="secondary-button"
+              to={`/trade?${params.toString()}`}
+            >
+              Return to acquisition
             </RouteLink>
-            <RouteLink className="secondary-button" to="/trade#convert">
+            <RouteLink
+              className="secondary-button"
+              to={`/trade?${params.toString()}#convert`}
+            >
               Wrap or deposit
             </RouteLink>
           </div>

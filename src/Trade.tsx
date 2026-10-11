@@ -59,6 +59,7 @@ export function Trade() {
         n,
         side === "buy",
       ]);
+      assertCurrent();
       const inventory =
         side === "buy"
           ? await read(config.exchange, exchangeAbi, "inventory", [
@@ -182,6 +183,7 @@ export function Trade() {
           <label className="field-label">
             Asset
             <select
+              aria-label="Asset"
               value={assetKey}
               onChange={(e) => setAssetKey(e.target.value)}
             >
@@ -329,7 +331,10 @@ export function Trade() {
             exchange.
           </p>
           <div className="button-row">
-            <RouteLink className="secondary-button" to="/faucet">
+            <RouteLink
+              className="secondary-button"
+              to={`/faucet?${params.toString()}`}
+            >
               Get aDEMO
             </RouteLink>
             <RouteLink className="secondary-button" to="/assets">
@@ -487,7 +492,11 @@ export function Conversions() {
       <div className="action-card">
         <label className="field-label">
           Conversion
-          <select value={kind} onChange={(e) => setKind(e.target.value)}>
+          <select
+            aria-label="Conversion"
+            value={kind}
+            onChange={(e) => setKind(e.target.value)}
+          >
             <option value="wrap">AVAX → awAVAX</option>
             <option value="unwrap">awAVAX → AVAX</option>
             <option value="deposit">aDEMO → vaDEMO</option>
