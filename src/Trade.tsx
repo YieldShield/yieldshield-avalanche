@@ -185,7 +185,7 @@ export function Trade() {
       <PageTitle
         eyebrow="FUND YOUR POSITION"
         title="Trade. Then protect."
-        description="Buy or sell funded test assets for aDEMO. Review an actual quote, a 0.3% trade fee and an enforceable price limit before signing."
+        description="Buy and sell test assets for aDEMO. Trade fee: 0.3%."
       />
       {params.get("return") && (
         <RouteLink
@@ -333,7 +333,7 @@ export function Trade() {
           )}
         </section>
         <section className="market-card">
-          <div className="eyebrow">ACTUAL FUNDED INVENTORY</div>
+          <div className="eyebrow">ASSET DETAILS</div>
           <h2>{asset.name}</h2>
           <p className="card-description">{asset.description}</p>
           <Facts
@@ -349,11 +349,14 @@ export function Trade() {
               ["Protection", "Separate opt-in transaction"],
             ]}
           />
-          <p className="muted-text">
-            A stale or unavailable price blocks trading. Quotes never fall back
-            to a synthetic price. The scenario market is separate from this
-            exchange.
-          </p>
+          <details className="help-details">
+            <summary>How trade pricing works</summary>
+            <p>
+              A stale or unavailable price blocks trading. Quotes use the price
+              source above, with no synthetic fallback. The scenario market is
+              separate.
+            </p>
+          </details>
           <div className="button-row">
             <RouteLink
               className="secondary-button"
@@ -521,15 +524,17 @@ export function Conversions() {
       <div>
         <div className="eyebrow">DIRECT CONVERSIONS</div>
         <h2>Wrap or enter a funded vault.</h2>
-        <p>
-          awAVAX always wraps one deposited Fuji AVAX. Vault receipts redeem
-          against the aDEMO actually held by their vault. No yield is invented:
-          only funded donations can increase the redemption value.
-        </p>
-        <p>
-          vaDEMO has 18 decimals and can be protected. bvaDEMO has six decimals
-          and can back protection. These are different contracts and roles.
-        </p>
+        <p>Wrap AVAX 1:1 or exchange aDEMO for funded vault receipts.</p>
+        <p>vaDEMO can be protected; bvaDEMO backs markets.</p>
+        <details className="help-details">
+          <summary>How vault receipts work</summary>
+          <p>
+            Receipts redeem against the aDEMO held by their vault. Only funded
+            donations can increase redemption value; no yield is promised.
+            vaDEMO has 18 decimals, while bvaDEMO has six. They are separate
+            contracts.
+          </p>
+        </details>
       </div>
       <div className="action-card">
         <label className="field-label">

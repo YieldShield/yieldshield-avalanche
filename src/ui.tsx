@@ -95,8 +95,11 @@ export function Notice() {
   return !ready ? (
     <div className="notice">
       {config.factory
-        ? "Contract configuration is awaiting verification. Wallet actions remain unavailable; check Network status for details."
-        : "Fuji contracts are awaiting deployment. Explore all workflows here; wallet actions become available after verified deployment. No deposits have been collected."}
+        ? "Contract verification pending. Transactions are disabled."
+        : "Fuji deployment pending. Deposits and transactions are disabled."}{" "}
+      <RouteLink className="inline-link" to="/status">
+        Network status
+      </RouteLink>
     </div>
   ) : null;
 }
@@ -193,14 +196,13 @@ export function Risk({
       </strong>
       <p>
         {provider
-          ? "Provider deposits and redemptions freeze while any protected position remains. After maturity, anyone can settle each position to release the freeze. You absorb losses and receive surrendered asset inventory; fees and returns are not guaranteed."
-          : "At maturity, remaining assets are surrendered for the fixed entry backing claim, even if the asset rose. Exit before maturity to retain upside. Partial exits release only their proportional entry claim."}
+          ? "You absorb losses. Deposits and withdrawals pause while protection is open. After maturity, anyone can settle it to lift the pause. Redemptions can include surrendered assets; fees and returns are not guaranteed."
+          : "At maturity, remaining assets are surrendered for the fixed entry claim, even if their price rose. Exit earlier to keep upside. Partial exits reduce the claim proportionally."}
       </p>
       {backing === "bvaDEMO" && (
         <p>
-          The floor is a fixed number of bvaDEMO vault receipts. Their
-          redeemable aDEMO amount can change; this is not a fixed dollar
-          guarantee.
+          Your floor is fixed in bvaDEMO receipts, not dollars. Their redeemable
+          aDEMO value can change.
         </p>
       )}
     </div>

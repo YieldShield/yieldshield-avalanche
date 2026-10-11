@@ -16,11 +16,8 @@ export function Markets({ home = false }: { home?: boolean }) {
               <em>Define your floor.</em>
             </h1>
             <p>
-              A place for holders and capital providers to meet.
-              <br />
-              Three funded test assets. Two forms of backing.
-              <br />
-              One clear choice about who carries the downside.
+              Protect your assets or provide the capital behind them. Three test
+              assets. Two forms of backing.
             </p>
             <div className="button-row">
               <RouteLink className="secondary-button" to="/protect">
@@ -51,7 +48,7 @@ export function Markets({ home = false }: { home?: boolean }) {
         <PageTitle
           eyebrow="DISCOVER"
           title="Find your market."
-          description="Compare the asset, backing token, price source and capacity before choosing a role."
+          description="Choose an asset, backing token and role."
         />
       )}
       <div className="market-heading">
@@ -68,8 +65,8 @@ export function Markets({ home = false }: { home?: boolean }) {
           <MarketCard key={m.key} market={m} />
         ))}
       </div>
-      <div className="field-note">
-        <h3>A funded experiment.</h3>
+      <details className="field-note help-details">
+        <summary>What backs these test assets?</summary>
         <p>
           All assets are valueless test tokens. awAVAX wraps actual Fuji AVAX;
           vaDEMO and bvaDEMO represent funded aDEMO vault deposits. sAVAX and
@@ -78,7 +75,7 @@ export function Markets({ home = false }: { home?: boolean }) {
         <RouteLink className="hero-link" to="/how-it-works">
           Read the field guide ↗
         </RouteLink>
-      </div>
+      </details>
     </>
   );
 }

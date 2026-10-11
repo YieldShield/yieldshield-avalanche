@@ -216,8 +216,8 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
         }
         description={
           provider
-            ? "Back a market, absorb the downside and earn a share of positive-gain fees."
-            : "Deposit an asset and record its entry claim in the backing token. Keep the choice of asset or backing until maturity."
+            ? "Back a market for a share of gain fees. Your capital carries the downside."
+            : "Choose an asset and backing token, then review your entry claim."
         }
       />
       <div className="market-grid">
@@ -232,9 +232,7 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
           {success ? (
             <div className="success-panel">
               <h2>{provider ? "Capital provided." : "Protection opened."}</h2>
-              <p>
-                The transaction was confirmed. Your position is ready to manage.
-              </p>
+              <p>Confirmed. Your position is ready.</p>
               <RouteLink className="hero-link" to={success}>
                 View position ↗
               </RouteLink>
@@ -344,12 +342,12 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
                     : "Prepared default: 150%",
               ],
               [
-                "Gain fees to providers",
+                "Gain fees · provider / creator / protocol",
                 s
-                  ? s.terms.juniorFeeBps / 100 + "%"
+                  ? `${s.terms.juniorFeeBps / 100}% / ${s.terms.creatorFeeBps / 100}% / 1%`
                   : ready
                     ? "Unavailable"
-                    : "Prepared default: 10%",
+                    : "10% / 1% / 1% · prepared",
               ],
               [
                 "Maturity",
@@ -398,7 +396,7 @@ export function Positions() {
       <PageTitle
         eyebrow="YOUR EXPEDITION"
         title="My positions."
-        description="Manage protected assets, provider capital, earned fees and matured backing claims across every market."
+        description="Manage protection, capital, fees and backing claims."
       />
       <div className="button-row">
         <RouteLink className="secondary-button" to="/protect">
@@ -580,7 +578,7 @@ export function PositionDetail() {
       <PageTitle
         eyebrow={`PROTECTION #${id} / ${m.name}`}
         title="Your remaining claim."
-        description="Exit part or all, transfer ownership, or settle matured protection. Each partial exit keeps the remaining entry basis intact."
+        description="Exit, transfer or settle your protection. Partial exits preserve the remaining entry basis."
       />
       <div className="market-grid">
         <section className="market-card">

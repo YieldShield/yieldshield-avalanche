@@ -21,8 +21,8 @@ export function Portfolio() {
     <>
       <PageTitle
         eyebrow="YOUR HOLDINGS"
-        title="Portfolio, by asset."
-        description="Wallet balances and protocol claims stay in their native units. There is no invented dollar total or projected yield."
+        title="Wallet balances."
+        description="Balances and claims in their original asset units."
       />
       {account && (
         <button className="secondary-button" onClick={disconnect}>
@@ -220,9 +220,8 @@ export function Faucet() {
         <section className="market-card">
           <h2>Fuji AVAX for gas</h2>
           <p className="card-description">
-            Use the official Avalanche faucet with your own test wallet.
-            Contract deployment is currently deferred; this website does not ask
-            you to fund its deployer.
+            Get gas from the official faucet using your test wallet. Never fund
+            the Alpine deployer.
           </p>
           <a
             className="hero-link"
@@ -258,7 +257,7 @@ export function Status() {
       <PageTitle
         eyebrow="NETWORK STATUS"
         title="Verify the ground beneath you."
-        description="Public contract identities, current price availability and deployment state. An unavailable feed never becomes a synthetic quote."
+        description="Check deployment, contracts and price availability."
       />
       <div className="market-grid">
         <article className="market-card">
@@ -299,8 +298,7 @@ export function Status() {
             {loading ? "Refreshing…" : "Refresh network reads"}
           </button>
           <p className="card-description">
-            Local lifecycle tests are separate from a Fuji deployment. A
-            deployed frontend does not prove that contracts exist on Fuji.
+            Local test results do not confirm a Fuji deployment.
           </p>
         </article>
         <article className="market-card">
@@ -385,7 +383,7 @@ export function Assets() {
       <PageTitle
         eyebrow="TOKEN IDENTITIES"
         title="Know what you hold."
-        description="Integrated test assets are identified by exact role and contract. Reference assets are never presented as depositable integrations."
+        description="Test assets, their roles and contract addresses."
       />
       <div className="asset-cards">
         {[

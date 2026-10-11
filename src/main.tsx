@@ -58,8 +58,8 @@ function App() {
         </header>
         <div className="content">
           <div className="testnet-note">
-            <span>{localMode ? "LOCAL DEMO" : "TESTNET ONLY"}</span>All funds
-            are valueless test assets. Review the market terms before signing.
+            <span>{localMode ? "LOCAL DEMO" : "TESTNET ONLY"}</span>Valueless
+            test assets.
           </div>
           <Notice />
           <PortfolioNavigation />
@@ -120,7 +120,7 @@ function App() {
           )}
           <footer>
             <span>▲ YieldShield Alpine</span>
-            <p>Funded test assets · Transparent terms · Capital at risk</p>
+            <p>Capital at risk</p>
             <RouteLink to="/legal">Terms & risks</RouteLink>
           </footer>
         </div>

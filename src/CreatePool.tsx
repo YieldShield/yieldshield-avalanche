@@ -140,7 +140,7 @@ export function CreatePool() {
       <PageTitle
         eyebrow="CREATE A MARKET"
         title="Set the terms. Supply the seed."
-        description="Create an independent pool with an approved asset, your chosen backing and bounded terms. Creation and initial funding happen atomically."
+        description="Choose assets and terms. Create and fund your pool in one transaction."
       />
       <div className="market-grid">
         <section className="action-card">
