@@ -31,7 +31,9 @@ export async function installLocalWallet() {
   if (accounts.length < 4)
     throw new Error("Expected disposable unlocked Anvil accounts.");
   let selected = accounts[2],
-    rejectNext = false;
+    rejectNext = false,
+    pauseNext = false;
+  let resume: (() => void) | undefined;
   const listeners = new Map<string, Set<(...args: unknown[]) => void>>();
   const allowed = new Set([
     "eth_chainId",
@@ -73,6 +75,17 @@ export async function installLocalWallet() {
           throw Object.assign(new Error("User rejected the request."), {
             code: 4001,
           });
+        }
+        if (pauseNext) {
+          pauseNext = false;
+          pauseButton.textContent = "Pause next signature";
+          resumeButton.hidden = false;
+          await new Promise<void>((resolve) => {
+            resume = resolve;
+          });
+          resumeButton.hidden = true;
+          if ((await call("eth_chainId")) !== "0x7a69")
+            throw new Error("Local chain changed while signing was paused.");
         }
         const tx = params[0] as { from?: string; to?: string };
         if (tx.from?.toLowerCase() !== selected.toLowerCase())
@@ -120,6 +133,32 @@ export async function installLocalWallet() {
     rejectNext = true;
     rejectButton.textContent = "Next signature will be rejected";
   });
-  panel.append(summary, label, document.createElement("br"), rejectButton);
+  const pauseButton = document.createElement("button");
+  pauseButton.textContent = "Pause next signature";
+  pauseButton.addEventListener("click", () => {
+    pauseNext = true;
+    pauseButton.textContent = "Next signature will pause";
+  });
+  const resumeButton = document.createElement("button");
+  resumeButton.textContent = "Resume local signature";
+  resumeButton.hidden = true;
+  resumeButton.addEventListener("click", () => {
+    resume?.();
+    resume = undefined;
+  });
+  const networkButton = document.createElement("button");
+  networkButton.textContent = "Simulate network change (local only)";
+  networkButton.addEventListener("click", () => {
+    listeners.get("chainChanged")?.forEach((fn) => fn("0x7a69"));
+  });
+  panel.append(
+    summary,
+    label,
+    document.createElement("br"),
+    rejectButton,
+    pauseButton,
+    resumeButton,
+    networkButton,
+  );
   document.body.append(panel);
 }
