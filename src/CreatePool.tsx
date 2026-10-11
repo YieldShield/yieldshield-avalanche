@@ -10,6 +10,8 @@ import {
   oracleAbi,
   read,
   fmt,
+  chainDeadline,
+  chainTimestamp,
 } from "./chain";
 import { useAlpine } from "./state";
 import { PageTitle, ActionButton, Facts, RouteLink, Risk } from "./ui";
@@ -73,10 +75,11 @@ export function CreatePool() {
         terms.juniorNotice > 86400
       )
         throw new Error("Choose terms inside the displayed factory limits.");
+      const reviewedDeadline = await chainDeadline();
       assertCurrent();
       setReview({
         assertCurrent,
-        deadline: BigInt(Math.floor(Date.now() / 1000) + 600),
+        deadline: reviewedDeadline,
         seed,
         identity,
       });
@@ -90,7 +93,7 @@ export function CreatePool() {
       if (
         !review ||
         review.identity !== identity ||
-        review.deadline < BigInt(Math.floor(Date.now() / 1000))
+        review.deadline < (await chainTimestamp())
       )
         throw new Error("Review expired or wallet changed.");
       consumeReview(review.assertCurrent);

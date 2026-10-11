@@ -156,7 +156,7 @@ export function Activity() {
 }
 export function Faucet() {
   const [params] = useSearchParams();
-  const { account, identity, transact, balances } = useAlpine();
+  const { account, identity, transact, balances, chainTime } = useAlpine();
   const [next, setNext] = useState<bigint | null>(null),
     [error, setError] = useState("");
   useEffect(() => {
@@ -190,16 +190,16 @@ export function Faucet() {
               ],
               [
                 "Next claim",
-                next
-                  ? new Date(Number(next) * 1000).toLocaleString("en-US")
-                  : "Read after connecting",
+                next === null
+                  ? "Read after connecting"
+                  : next > chainTime
+                    ? new Date(Number(next) * 1000).toLocaleString("en-US")
+                    : "Available now",
               ],
             ]}
           />
           <ActionButton
-            disabled={
-              next !== null && next > BigInt(Math.floor(Date.now() / 1000))
-            }
+            disabled={next !== null && next > chainTime}
             onClick={() =>
               void transact(
                 "Claim test aDEMO",

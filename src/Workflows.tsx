@@ -15,6 +15,8 @@ import {
   explorer,
   short,
   walletProvider,
+  chainTimestamp,
+  chainDeadline,
 } from "./chain";
 import { useAlpine, type Snapshot, type Position } from "./state";
 import {
@@ -40,9 +42,8 @@ type Quote = {
   account: Address;
   details?: string;
 };
-const deadline = () => BigInt(Math.floor(Date.now() / 1000) + 600);
 async function valid(q: Quote) {
-  if (q.deadline < BigInt(Math.floor(Date.now() / 1000)))
+  if (q.deadline < (await chainTimestamp()))
     throw new Error("Review expired. Get a fresh quote.");
   const accounts = (await walletProvider()!.request({
     method: "eth_accounts",
@@ -104,7 +105,7 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
           read(market.address!, poolAbi, name),
         ),
       );
-      if (BigInt(Math.floor(Date.now() / 1000)) >= maturity)
+      if ((await chainTimestamp()) >= maturity)
         throw new Error("This epoch has ended. Create a fresh market.");
       let out: bigint;
       if (provider) {
@@ -129,13 +130,14 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
           );
       }
       if (out === 0n) throw new Error("Amount is too small.");
+      const reviewedDeadline = await chainDeadline();
       assertCurrent();
       setQuote({
         assertCurrent,
         amount: n,
         output: out,
         minimum: minimumOutput(out),
-        deadline: deadline(),
+        deadline: reviewedDeadline,
         account,
       });
     } catch (e) {
@@ -453,7 +455,8 @@ export function PositionDetail() {
   const marketKey =
       split < 0 ? routeParams.get("pool") || "reference" : key.slice(0, split),
     id = key.slice(split + 1);
-  const { markets, snapshots, account, identity, transact } = useAlpine();
+  const { markets, snapshots, account, identity, transact, chainTime } =
+    useAlpine();
   const m = markets.find(
       (m) => m.key.toLowerCase() === marketKey.toLowerCase(),
     ),
@@ -490,7 +493,7 @@ export function PositionDetail() {
     );
   const asset = assets.find((a) => a.key === m.asset)!,
     own = p.owner.toLowerCase() === account?.toLowerCase(),
-    matured = BigInt(Math.floor(Date.now() / 1000)) >= s.maturity;
+    matured = chainTime >= s.maturity;
   async function review() {
     const assertCurrent = guard();
     try {
@@ -501,13 +504,14 @@ export function PositionDetail() {
           recipient.toLowerCase() === account.toLowerCase()
         )
           throw new Error("Enter a different valid recipient address.");
+        const reviewedDeadline = await chainDeadline();
         assertCurrent();
         setQ({
           assertCurrent,
           amount: p.amount,
           output: p.floor,
           minimum: 0n,
-          deadline: deadline(),
+          deadline: reviewedDeadline,
           account,
         });
         return;
@@ -522,13 +526,14 @@ export function PositionDetail() {
         ]);
       } else output = n === p.amount ? p.floor : (p.floor * n) / p.amount;
       if (!output) throw new Error("Exit amount is too small.");
+      const reviewedDeadline = await chainDeadline();
       assertCurrent();
       setQ({
         assertCurrent,
         amount: n,
         output,
         minimum: minimumOutput(output),
-        deadline: deadline(),
+        deadline: reviewedDeadline,
         account,
       });
     } catch (e) {
@@ -703,7 +708,8 @@ export function PositionDetail() {
   );
 }
 export function ProviderPosition({ marketKey }: { marketKey: string }) {
-  const { markets, snapshots, account, identity, transact } = useAlpine();
+  const { markets, snapshots, account, identity, transact, chainTime } =
+    useAlpine();
   const m = markets.find((m) => m.key === marketKey)!,
     s = snapshots[marketKey];
   const [amount, setAmount] = useState(""),
@@ -731,6 +737,7 @@ export function ProviderPosition({ marketKey }: { marketKey: string }) {
         "previewJuniorWithdrawal",
         [account, n],
       );
+      const reviewedDeadline = await chainDeadline();
       assertCurrent();
       setQ({
         assertCurrent,
@@ -739,7 +746,7 @@ export function ProviderPosition({ marketKey }: { marketKey: string }) {
         secondary: asset,
         minimum: minimumOutput(out),
         secondaryMinimum: minimumOutput(asset),
-        deadline: deadline(),
+        deadline: reviewedDeadline,
         account: account!,
       });
     } catch (e) {
@@ -873,10 +880,7 @@ export function ProviderPosition({ marketKey }: { marketKey: string }) {
           ) : (
             <ActionButton
               disabled={
-                !s.ready ||
-                BigInt(Math.floor(Date.now() / 1000)) < s.ready ||
-                s.reserved > 0n ||
-                !amount
+                !s.ready || chainTime < s.ready || s.reserved > 0n || !amount
               }
               onClick={() => void review()}
             >
@@ -893,20 +897,19 @@ export function ProviderPosition({ marketKey }: { marketKey: string }) {
           its detail page.
         </p>
       )}
-      {s.positions.length > 0 &&
-        BigInt(Math.floor(Date.now() / 1000)) >= s.maturity && (
-          <div className="button-row">
-            {s.positions.map((p) => (
-              <RouteLink
-                key={String(p.id)}
-                className="secondary-button"
-                to={`/positions/${m.key}:${p.id}?pool=${m.key}`}
-              >
-                Settle #{String(p.id)}
-              </RouteLink>
-            ))}
-          </div>
-        )}
+      {s.positions.length > 0 && chainTime >= s.maturity && (
+        <div className="button-row">
+          {s.positions.map((p) => (
+            <RouteLink
+              key={String(p.id)}
+              className="secondary-button"
+              to={`/positions/${m.key}:${p.id}?pool=${m.key}`}
+            >
+              Settle #{String(p.id)}
+            </RouteLink>
+          ))}
+        </div>
+      )}
       {error && (
         <p className="error-note" role="alert">
           {error}

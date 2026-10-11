@@ -14,6 +14,8 @@ import {
   units,
   fmt,
   ZERO,
+  chainDeadline,
+  chainTimestamp,
 } from "./chain";
 import { useAlpine } from "./state";
 import { PageTitle, Amount, Facts, ActionButton, RouteLink } from "./ui";
@@ -89,6 +91,7 @@ export function Trade() {
       const balance = balances[side === "buy" ? "backing" : assetKey];
       if (balance === undefined || balance < (side === "buy" ? out : n))
         throw new Error("Insufficient wallet balance.");
+      const reviewedDeadline = await chainDeadline();
       assertCurrent();
       setQ({
         assertCurrent,
@@ -96,7 +99,7 @@ export function Trade() {
         output: out,
         fee,
         bound: side === "buy" ? (out * 1005n) / 1000n : minimumOutput(out),
-        deadline: BigInt(Math.floor(Date.now() / 1000) + 600),
+        deadline: reviewedDeadline,
         account,
         identity,
       });
@@ -117,7 +120,7 @@ export function Trade() {
       if (
         q.account !== account ||
         q.identity !== identity ||
-        q.deadline < BigInt(Math.floor(Date.now() / 1000))
+        q.deadline < (await chainTimestamp())
       )
         throw new Error("This review is no longer valid. Review again.");
       const [out] = await read(config.exchange, exchangeAbi, "quote", [
@@ -133,7 +136,7 @@ export function Trade() {
         await approve(config.backingToken, config.exchange, q.bound);
       else if (assetKey !== "native")
         await approve(asset.address!, config.exchange, q.amount);
-      if (q.deadline < BigInt(Math.floor(Date.now() / 1000)))
+      if (q.deadline < (await chainTimestamp()))
         throw new Error("Review expired while approving. Review again.");
       const [freshOutput] = await read(config.exchange, exchangeAbi, "quote", [
         asset.address,
@@ -447,13 +450,14 @@ export function Conversions() {
             [n],
           );
       if (!out) throw new Error("Conversion amount too small.");
+      const reviewedDeadline = await chainDeadline();
       assertCurrent();
       setQ({
         assertCurrent,
         amount: n,
         output: out,
         bound: minimumOutput(out),
-        deadline: BigInt(Math.floor(Date.now() / 1000) + 600),
+        deadline: reviewedDeadline,
         fee: 0n,
         account,
         identity,
@@ -471,7 +475,7 @@ export function Conversions() {
       if (
         q.identity !== identity ||
         q.account !== account ||
-        q.deadline < BigInt(Math.floor(Date.now() / 1000))
+        q.deadline < (await chainTimestamp())
       )
         throw new Error("Review expired or wallet changed.");
       if (!wrapping && deposit)

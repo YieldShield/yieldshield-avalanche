@@ -71,6 +71,7 @@ export const useAlpine = () =>
     snapshots: Record<string, Snapshot>;
     balances: Record<string, bigint>;
     loading: boolean;
+    chainTime: bigint;
     errors: Record<string, string>;
     connect: () => Promise<void>;
     disconnect: () => void;
@@ -110,6 +111,7 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
     [balances, setBalances] = useState<Record<string, bigint>>({}),
     [errors, setErrors] = useState<Record<string, string>>({}),
     [loading, setLoading] = useState(false),
+    [chainTime, setChainTime] = useState(0n),
     [activity, setActivity] = useState<Activity[]>(stored);
   const latestRead = useRef(createLatestRead());
   const generation = useRef(0),
@@ -158,6 +160,13 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     let catalog = [...featured];
     const issues: Record<string, string> = {};
+    const blockTime = await client
+      .getBlock()
+      .then((block) => block.timestamp)
+      .catch((error) => {
+        issues.clock = safeError(error);
+        return 0n;
+      });
     try {
       const registry = (await read(
         config.factory,
@@ -320,6 +329,7 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
       );
     }
     if (generationAtStart === generation.current && isLatestRead()) {
+      setChainTime(blockTime);
       setMarkets(catalog);
       setSnapshots(data);
       setBalances(funds);
@@ -471,6 +481,7 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
         balances,
         errors,
         loading,
+        chainTime,
         connect,
         disconnect,
         refresh,

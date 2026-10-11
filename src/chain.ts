@@ -62,6 +62,8 @@ export function units(value: string, decimals = 18) {
   if (n <= 0n) throw new Error("Amount must be greater than zero.");
   return n;
 }
+export const chainTimestamp = async () => (await client.getBlock()).timestamp;
+export const chainDeadline = async () => (await chainTimestamp()) + 600n;
 export const ZERO = zeroAddress;
 export const DEFAULT_TERMS = {
   collateralBps: 15000,
