@@ -6,9 +6,10 @@ export function useMarket() {
   const a = useAlpine();
   const [params, setParams] = useSearchParams();
   const key = params.get("pool") || "reference";
-  const market =
-    a.markets.find((m) => m.key.toLowerCase() === key.toLowerCase()) ||
-    a.markets[0];
+  const market = a.markets.find(
+    (m) => m.key.toLowerCase() === key.toLowerCase(),
+  );
+  if (!market) throw new Error("Unknown market selection");
   return {
     ...a,
     market,

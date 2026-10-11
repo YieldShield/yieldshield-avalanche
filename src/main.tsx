@@ -18,8 +18,18 @@ import { CreatePool } from "./CreatePool";
 import { Portfolio, Activity, Faucet, Status, Assets } from "./AccountPages";
 import { Guide, Legal } from "./Guide";
 function App() {
-  const { account, connect, message, setMessage } = useAlpine();
+  const { account, connect, message, setMessage, markets, loading } =
+    useAlpine();
   const location = useLocation();
+  const selected = new URLSearchParams(location.search).get("pool");
+  const invalidPool =
+    selected &&
+    !markets.some((m) => m.key.toLowerCase() === selected.toLowerCase());
+  const pathPool = location.pathname.startsWith("/pools/")
+    ? decodeURIComponent(location.pathname.slice(7))
+    : null;
+  const mismatchedPool =
+    pathPool && selected && pathPool.toLowerCase() !== selected.toLowerCase();
   const nav = [
     ["/markets", "Markets", "◇"],
     ["/protect", "Protect", "↗"],
@@ -100,34 +110,47 @@ function App() {
               </button>
             </div>
           )}
-          <Routes>
-            <Route path="/" element={<Markets home />} />
-            <Route path="/markets" element={<Markets />} />
-            <Route path="/pools/:key" element={<PoolDetail />} />
-            <Route path="/protect" element={<RoleFlow role="protect" />} />
-            <Route path="/provide" element={<RoleFlow role="provide" />} />
-            <Route path="/positions" element={<Positions />} />
-            <Route path="/positions/:key" element={<PositionDetail />} />
-            <Route path="/trade" element={<Trade />} />
-            <Route path="/create-pool" element={<CreatePool />} />
-            <Route path="/portfolio" element={<Portfolio />} />
-            <Route path="/activity" element={<Activity />} />
-            <Route path="/faucet" element={<Faucet />} />
-            <Route path="/assets" element={<Assets />} />
-            <Route path="/status" element={<Status />} />
-            <Route path="/how-it-works" element={<Guide />} />
-            <Route path="/learn/scenarios" element={<Guide />} />
-            <Route path="/legal" element={<Legal />} />
-            <Route
-              path="*"
-              element={
-                <Empty title="Page not found">
-                  Explore <RouteLink to="/markets">markets</RouteLink> to find a
-                  route.
-                </Empty>
+          {invalidPool || mismatchedPool ? (
+            <Empty
+              title={
+                loading
+                  ? "Loading market registry…"
+                  : "Invalid market selection"
               }
-            />
-          </Routes>
+            >
+              The selected pool could not be verified. No transaction is
+              available. <a href="/markets">Choose a market</a>.
+            </Empty>
+          ) : (
+            <Routes>
+              <Route path="/" element={<Markets home />} />
+              <Route path="/markets" element={<Markets />} />
+              <Route path="/pools/:key" element={<PoolDetail />} />
+              <Route path="/protect" element={<RoleFlow role="protect" />} />
+              <Route path="/provide" element={<RoleFlow role="provide" />} />
+              <Route path="/positions" element={<Positions />} />
+              <Route path="/positions/:key" element={<PositionDetail />} />
+              <Route path="/trade" element={<Trade />} />
+              <Route path="/create-pool" element={<CreatePool />} />
+              <Route path="/portfolio" element={<Portfolio />} />
+              <Route path="/activity" element={<Activity />} />
+              <Route path="/faucet" element={<Faucet />} />
+              <Route path="/assets" element={<Assets />} />
+              <Route path="/status" element={<Status />} />
+              <Route path="/how-it-works" element={<Guide />} />
+              <Route path="/learn/scenarios" element={<Guide />} />
+              <Route path="/legal" element={<Legal />} />
+              <Route
+                path="*"
+                element={
+                  <Empty title="Page not found">
+                    Explore <RouteLink to="/markets">markets</RouteLink> to find
+                    a route.
+                  </Empty>
+                }
+              />
+            </Routes>
+          )}
           <footer>
             <span>▲ YieldShield Alpine</span>
             <p>Funded test assets · Transparent terms · Capital at risk</p>
