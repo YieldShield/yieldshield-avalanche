@@ -15,7 +15,7 @@ import { useAlpine } from "./state";
 import { PageTitle, Facts, RouteLink, ActionButton, Empty } from "./ui";
 import { safeError } from "./math.mjs";
 export function Portfolio() {
-  const { account, balances, markets, snapshots } = useAlpine();
+  const { account, balances, markets, snapshots, disconnect } = useAlpine();
   return (
     <>
       <PageTitle
@@ -23,6 +23,11 @@ export function Portfolio() {
         title="Portfolio, by asset."
         description="Wallet balances and protocol claims stay in their native units. There is no invented dollar total or projected yield."
       />
+      {account && (
+        <button className="secondary-button" onClick={disconnect}>
+          Disconnect {short(account)}
+        </button>
+      )}
       {!account && (
         <Empty title="Connect your wallet">
           Read balances, entry claims and provider exposure for your current

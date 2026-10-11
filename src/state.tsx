@@ -71,6 +71,7 @@ export const useAlpine = () =>
     loading: boolean;
     errors: Record<string, string>;
     connect: () => Promise<void>;
+    disconnect: () => void;
     refresh: () => Promise<void>;
     transact: (
       label: string,
@@ -114,10 +115,14 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
     config.factory && config.referencePool && config.backingToken,
   );
   useEffect(() => {
-    localStorage.setItem(
-      "alpine-activity-v2",
-      JSON.stringify(activity.slice(0, 100)),
-    );
+    try {
+      localStorage.setItem(
+        "alpine-activity-v2",
+        JSON.stringify(activity.slice(0, 100)),
+      );
+    } catch {
+      /* Browser storage can be unavailable; in-memory activity still works. */
+    }
   }, [activity]);
   useEffect(() => {
     const provider = window.ethereum;
@@ -320,12 +325,24 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
     const timer = setInterval(() => void refresh(), 20000);
     return () => clearInterval(timer);
   }, [refresh, account]);
+  function disconnect() {
+    generation.current++;
+    currentAccount.current = null;
+    setAccount(null);
+    setIdentity((n) => n + 1);
+    setBalances({});
+    setSnapshots({});
+    setMessage("Wallet disconnected from this app.");
+  }
   async function connect() {
     try {
       const result = await wallet();
       generation.current++;
       currentAccount.current = result.account;
       setAccount(result.account);
+      setSnapshots({});
+      setBalances({});
+      setErrors({});
       setIdentity((x) => x + 1);
       setMessage("Wallet connected. Review each operation before signing.");
     } catch (e) {
@@ -343,13 +360,15 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
     if (!ready) throw new Error("Fuji contracts are awaiting deployment.");
     if (!currentAccount.current) throw new Error("Connect your wallet first.");
     const expected = currentAccount.current;
+    const expectedGeneration = generation.current;
     setBusy(true);
     let hash: Hash | undefined;
     try {
       const { w, account: active } = await wallet();
       if (
         active.toLowerCase() !== expected.toLowerCase() ||
-        currentAccount.current !== expected
+        currentAccount.current !== expected ||
+        generation.current !== expectedGeneration
       )
         throw new Error("Wallet changed. Review again.");
       const request = {
@@ -446,6 +465,7 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
         errors,
         loading,
         connect,
+        disconnect,
         refresh,
         transact,
         approve,
