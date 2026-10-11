@@ -63,7 +63,7 @@ contract AlpinePoolTest {
     }
     function testJuniorCannotWithdrawReservedBacking() public {
         _open(1 ether); vm.prank(BOB); pool.requestJuniorWithdrawal(); vm.warp(block.timestamp+121);
-        uint256 amount = pool.shares(BOB); vm.prank(BOB); vm.expectRevert(AlpinePool.InsufficientBacking.selector); pool.withdrawJunior(amount, 0, 0);
+        uint256 amount = pool.shares(BOB); vm.prank(BOB); vm.expectRevert(AlpinePool.ActiveExposure.selector); pool.withdrawJunior(amount, 0, 0);
     }
     function testJuniorWithdrawalPaysAssetBasketAfterClaim() public {
         uint256 id = _open(1 ether); vm.prank(ALICE); pool.exitBacking(id);
@@ -85,7 +85,7 @@ contract AlpinePoolTest {
         vm.prank(ALICE); vm.expectRevert(AlpinePool.NotReady.selector); pool.exitBacking(id);
         vm.warp(block.timestamp+61); vm.prank(BOB); vm.expectRevert(AlpinePool.NotOwner.selector); pool.exitBacking(id);
         vm.prank(ALICE); vm.expectRevert(AlpinePool.Slippage.selector); pool.exitAvax(id,2 ether);
-        vm.prank(BOB); vm.expectRevert(AlpinePool.NotReady.selector); pool.withdrawJunior(1e18,0,0);
+        vm.prank(BOB); vm.expectRevert(AlpinePool.ActiveExposure.selector); pool.withdrawJunior(1e18,0,0);
     }
     function testFuzzReserveAndNativeAccounting(uint96 rawAmount, uint32 rawPrice) public {
         uint256 amount = 1e15 + uint256(rawAmount) % (10 ether - 1e15);
@@ -104,6 +104,33 @@ contract AlpinePoolTest {
         feed.set(0,block.timestamp,2); vm.expectRevert(); adapter.price();
         feed.set(-1,block.timestamp,2); vm.expectRevert(); adapter.price();
         feed.set(25e8,block.timestamp,1); vm.expectRevert(); adapter.price();
+    }
+
+    function testJuniorFairnessCannotEscapeUnrealizedShortfall() public {
+        _open(10 ether); oracle.set(15e6);
+        vm.startPrank(BOB); pool.requestJuniorWithdrawal(); vm.warp(block.timestamp + 121);
+        vm.expectRevert(AlpinePool.ActiveExposure.selector); pool.withdrawJunior(500e18,0,0);
+        vm.expectRevert(AlpinePool.ActiveExposure.selector); pool.depositJunior(100e6,1);
+        vm.stopPrank();
+    }
+    function testExpiryUnblocksJuniorWithoutOwnerAndKeepsClaimSolvent() public {
+        uint256 id = _open(10 ether); oracle.set(0); vm.warp(pool.maturity());
+        vm.prank(BOB); pool.settleExpired(id);
+        require(pool.reservedBacking()==0 && pool.totalBacking()==750e6, "settled");
+        require(pool.claimableBacking(ALICE)==250e6 && pool.totalClaimableBacking()==250e6, "owed");
+        vm.prank(BOB); pool.requestJuniorWithdrawal(); vm.warp(block.timestamp+121);
+        uint256 amount=pool.shares(BOB); vm.prank(BOB); pool.withdrawJunior(amount,750e6,10 ether);
+        require(token.balanceOf(address(pool))==250e6, "owner credit remains");
+        vm.prank(ALICE); pool.claimBacking(); require(token.balanceOf(ALICE)==250e6, "claim");
+        require(pool.totalClaimableBacking()==0, "claim liability released");
+        vm.prank(ALICE); vm.expectRevert(AlpinePool.InvalidAmount.selector); pool.claimBacking();
+    }
+    function testEpochAdmissionCutoffAndUpsideForfeiture() public {
+        uint256 id=_open(1 ether); vm.warp(pool.maturity()-60);
+        vm.prank(ALICE); vm.expectRevert(AlpinePool.EpochClosed.selector); pool.protect{value:1 ether}(1,block.timestamp);
+        vm.warp(pool.maturity()); oracle.set(50e6);
+        vm.prank(ALICE); vm.expectRevert(AlpinePool.EpochClosed.selector); pool.exitAvax(id,0);
+        pool.settleExpired(id); require(pool.claimableBacking(ALICE)==25e6, "expiry floor only");
     }
     function testMainnetDeploymentRejected() public {
         vm.chainId(43114); vm.expectRevert(); new AlpinePool(address(token),address(oracle),CREATOR,PROTOCOL);
