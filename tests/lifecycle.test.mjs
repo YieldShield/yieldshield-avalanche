@@ -32,3 +32,31 @@ test("late background reads cannot overwrite the confirmed position refresh", as
   assert.deepEqual(displayed, { balance: 900, openPositions: 1 });
   assert.equal(loading, false);
 });
+
+import { createReviewScope } from "../src/lifecycle.mjs";
+test("approval completed after leaving the route cannot submit the hidden deposit", async () => {
+  const scope = createReviewScope();
+  scope.update("holder:wrapped:1");
+  const assertCurrent = scope.capture(),
+    approval = deferred();
+  let depositWrites = 0;
+  const confirmation = async () => {
+    assertCurrent();
+    await approval.promise;
+    assertCurrent();
+    depositWrites++;
+  };
+  const pending = confirmation();
+  scope.dispose();
+  approval.resolve();
+  await assert.rejects(pending, /left this workflow/);
+  assert.equal(depositWrites, 0);
+});
+test("changing asset away and back cannot resurrect an in-flight quote", () => {
+  const scope = createReviewScope();
+  scope.update("wrapped");
+  const assertCurrent = scope.capture();
+  scope.update("vault");
+  scope.update("wrapped");
+  assert.throws(assertCurrent, /changed/);
+});

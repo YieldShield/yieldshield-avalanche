@@ -1,13 +1,12 @@
-import { useRef } from "react";
-/** A late RPC response must never revive a review for changed inputs or wallet. */
+import { useEffect, useRef } from "react";
+import { createReviewScope } from "./lifecycle.mjs";
+/** Late reads and delayed approvals cannot revive an obsolete or unmounted review. */
 export function useReviewGuard(values: unknown[]) {
-  const revision = useRef("");
-  revision.current = JSON.stringify(values);
-  return () => {
-    const captured = revision.current;
-    return () => {
-      if (revision.current !== captured)
-        throw new Error("Wallet, market or amount changed. Review again.");
-    };
-  };
+  const scope = useRef(createReviewScope());
+  scope.current.update(JSON.stringify(values));
+  useEffect(() => {
+    scope.current.mount();
+    return () => scope.current.dispose();
+  }, []);
+  return () => scope.current.capture();
 }
