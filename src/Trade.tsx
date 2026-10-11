@@ -28,15 +28,28 @@ type Quote = {
   identity: number;
 };
 export function Trade() {
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const { account, identity, balances, approve, transact, markets } =
     useAlpine();
-  const [assetKey, setAssetKey] = useState(params.get("asset") || "native"),
-    [side, setSide] = useState<"buy" | "sell">("buy"),
-    [amount, setAmount] = useState(
-      params.get("return") === "provide" ? "" : params.get("amount") || "",
-    ),
-    [q, setQ] = useState<Quote | null>(null),
+  const assetKey = params.get("asset") || "native";
+  const side = params.get("side") === "sell" ? "sell" : "buy";
+  const amount =
+    params.get("tradeAmount") ??
+    (params.get("return") === "provide" ? "" : params.get("amount") || "");
+  function updateDraft(key: string, value: string) {
+    setParams(
+      (previous) => {
+        const next = new URLSearchParams(previous);
+        next.set(key, value);
+        return next;
+      },
+      { replace: true, preventScrollReset: true },
+    );
+  }
+  const setAssetKey = (value: string) => updateDraft("asset", value);
+  const setSide = (value: string) => updateDraft("side", value);
+  const setAmount = (value: string) => updateDraft("tradeAmount", value);
+  const [q, setQ] = useState<Quote | null>(null),
     [error, setError] = useState(""),
     [success, setSuccess] = useState<string | null>(null),
     [working, setWorking] = useState(false);
@@ -350,13 +363,25 @@ export function Trade() {
   );
 }
 export function Conversions() {
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const { account, identity, balances, approve, transact } = useAlpine();
-  const [kind, setKind] = useState(params.get("convert") || "wrap"),
-    [amount, setAmount] = useState(
-      params.get("return") === "provide" ? params.get("amount") || "" : "",
-    ),
-    [q, setQ] = useState<Quote | null>(null),
+  const kind = params.get("convert") || "wrap";
+  const amount =
+    params.get("convertAmount") ??
+    (params.get("return") === "provide" ? params.get("amount") || "" : "");
+  function updateDraft(key: string, value: string) {
+    setParams(
+      (previous) => {
+        const next = new URLSearchParams(previous);
+        next.set(key, value);
+        return next;
+      },
+      { replace: true, preventScrollReset: true },
+    );
+  }
+  const setKind = (value: string) => updateDraft("convert", value);
+  const setAmount = (value: string) => updateDraft("convertAmount", value);
+  const [q, setQ] = useState<Quote | null>(null),
     [error, setError] = useState(""),
     [success, setSuccess] = useState("");
   useEffect(() => {

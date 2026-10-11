@@ -87,7 +87,11 @@ function App() {
           {nav.map(([to, label, icon]) => (
             <NavLink
               key={to}
-              to={`${to}${location.search}`}
+              to={
+                selected
+                  ? `${to}?${new URLSearchParams({ pool: selected })}`
+                  : to
+              }
               className={({ isActive }) => (isActive ? "selected" : "")}
             >
               <span aria-hidden>{icon}</span>
