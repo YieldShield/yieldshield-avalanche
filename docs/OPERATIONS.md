@@ -1,39 +1,43 @@
 # Operations
 
-## Prepared deployment, not yet broadcast
+## Fuji deployment is deferred
 
-The owner selected **prepare deployment for later** on 11 October 2026. The dedicated new Fuji public signer is `0x59EFc921242ef1a8140b723aa3277f168eaed2EC`; balance was zero during preflight. Its private key is in an ignored owner-local `.secrets` file with mode 0600 and is never in source control, frontend code, public logs or build output. Do not fund it with real assets. The official faucet requires Builder Hub/Core authentication.
+The owner selected **prepare deployment for later** on 11 October 2026. The dedicated public test signer is `0x59EFc921242ef1a8140b723aa3277f168eaed2EC`. Its private key remains in an ignored owner-local `.secrets` file, never in source, browser code or logs. Only faucet-funded test AVAX may be used.
 
-1. Obtain test AVAX for this address from https://build.avax.network/console/primary-network/faucet.
-2. Build and test the checked-out source: `npm ci --ignore-scripts`, `npm run test:contracts`, `npm test`, `npm run build`.
-3. Run `npm run deploy:fuji` for a read-only chain/balance preflight.
-4. Once test gas is available and deployment is intended, run `npm run deploy:fuji -- --broadcast`.
-5. Run `npm run verify:fuji`. Only successful verification changes manifest status to `verified` and creates `docs/evidence/fuji-verification.json`.
-6. Run a separate public Fuji wallet journey before representing the release as end-to-end verified. Capture mined receipts and recipient balances; local chain evidence cannot replace it.
-7. Commit the public registry/evidence separately, rebuild the website and publish the updated static output.
+1. Build and verify the exact checkout: `npm ci --ignore-scripts`, `npm run test:contracts`, `npm test`, `npm run build`.
+2. `npm run deploy:fuji` performs read-only chain/balance preflight. It does not broadcast.
+3. After the owner resumes deployment and faucet funding is available, `npm run deploy:fuji -- --broadcast` executes the prepared plan. It requires at least 0.1 Fuji AVAX for gas and 0.02 AVAX of funded exchange inventory; actual total gas requirements may be higher.
+4. `npm run verify:fuji` checks chain 43113, deployed code, factory registration, asset and backing identities, configured terms, initial seed ownership and successful receipts before marking the manifest `deployed-and-verified`.
+5. Run a public wallet journey and save confirmed receipt/balance evidence before describing Fuji as end-to-end verified. Commit public registry/evidence separately, rebuild and deploy the website.
 
-The deployment checks chain 43113, uses one new signer, has no mainnet mode and requires explicit broadcast. Each signed transaction is saved privately before send; an interrupted operation reuses that identical signed intent/hash. Public registry entries are written only after successful receipts. Do not delete an ambiguous intent or replace its nonce. Check the original hash onchain first.
+Each signed intent is privately saved before send. Interrupted deployment reuses the identical signed transaction/hash. Never delete an ambiguous intent or casually replace a nonce. The public manifest records mined successful operations. Scripts have no mainnet mode.
 
-Five contracts are deployed: aDEMO, scenario oracle, reference oracle, scenario market, reference market. A faucet call mints 10,000 valueless aDEMO; each market receives 5,000 as initial junior backing. Both creator and protocol fee recipients are the dedicated test signer for this test release, not a production governance policy. Every market's 7-day clock starts at its deployment and cannot be extended.
+## Version 2 deployment plan
 
-## Website
+The shared `setup-markets.mjs` plan deploys the aDEMO faucet token, separate scenario/reference oracles, awAVAX, vaDEMO, bvaDEMO, vault oracle, factory (including backing-unit adapters), and funded exchange. The factory creates five featured markets: reference AVAX, synthetic AVAX, wrapped AVAX, protected vault receipts, and reference AVAX backed by bvaDEMO. Every creation seeds 500 units of selected backing and credits corresponding provider shares to the creator.
 
-`npm run build` produces `dist/` for static hosting. All deployment identities are public in `config/deployment.json`; no `.env` is needed for normal operation. A generated Vercel local environment file is ignored and is not part of the application. The browser checks Fuji before transactions, requests exact token approval, uses a 0.5% quote tolerance (minimum outputs round upward so even tiny quotes stay within that bound), waits for receipts, and links to the explorer. A mature epoch stops deposits and AVAX exits; fixed backing exits, expiry settlement and backing claims remain available.
+The seed faucet provides 10,000 aDEMO. Both vaults receive actual deposits; exchange inventory receives 1,000 aDEMO, 0.01 native AVAX, 0.01 awAVAX and 100 vaDEMO. These are finite balances. **No holder positions are seeded** so initial testers can provide capital immediately. Creator/protocol fee recipients are the dedicated test signer for this pilot.
 
-The live market must use the verified Chainlink Fuji AVAX/USD proxy `0x5498BB86BC934c8D34FDA08E81D444153d0D06aD`, 8 decimals, a 600-second advertised heartbeat, and this pilot's conservative 1,200-second maximum age. No fallback can silently turn a failed live price into synthetic data.
+The factory registers at most 32 markets, each with at most 100 lifetime positions. It allows approved asset/oracle/backing combinations and bounded immutable terms; no arbitrary token can be listed. The factory's 500 unit seed is provider capital, not a listing fee. Fixed epochs are not renewed automatically.
 
-## Expiry and redemption
+## Website and wallet behavior
 
-The contract caps an epoch at 100 positions. The UI scans this complete bounded set. After maturity anyone connected can use “Settle next expired position” repeatedly; each transaction settles one position. Credited backing is excluded from junior capital and stays in the contract until its owner claims it. Juniors can start withdrawal notice before settlement finishes. They cannot deposit or redeem while any protected position remains active.
+`npm run build` produces `dist/`. Public identities live in `config/deployment.json`; no secret environment variable is needed. Vercel's local environment files and private grant records remain excluded. Deep routes rewrite to the SPA entrypoint. The app verifies wallet chain/account, rejects unknown market selections, discards stale asynchronous reviews, uses exact approvals, binds price limits and transaction deadlines, and records transaction hashes before waiting for confirmation.
 
-A subsequent epoch requires a new market deployment and a deliberate frontend registry update. This pilot has no automatic rollover, keeper funding, insured outcome or liquidity promise. A production system would need more complete pricing, independent reviews and governance.
+Reference pricing uses Fuji Chainlink AVAX/USD `0x5498BB86BC934c8D34FDA08E81D444153d0D06aD`, 8 decimals, with a 1,200 second maximum age. No failed reference read becomes a synthetic price. Vault-backed quotes convert nominal aDEMO value into actual backing-vault share units. The six-decimal bvaDEMO collateral and eighteen-decimal vaDEMO exposure vault have different contract addresses and metadata.
 
-## Evidence and reproducibility
+## Expiry and provider liquidity
 
-- `forge test --root contracts`: 14 tests, including 256 fuzz runs for reserve/native accounting, plus specific junior fairness and forced-expiry regression tests.
-- `npm test`: exact-unit payoff, backing capacity, invalid-price and ceiling-rounded minimum-output tests, including tiny quotes.
-- `npx playwright test`: desktop/mobile navigation, responsive overflow, no-wallet behavior, account/network change resets, undeployed-state restrictions and risk copy.
-- `node scripts/local-journey.mjs`: complete signed local lifecycle, 13 mined transactions, recipient balances and zero residual backing after unwind.
-- `docs/evidence/desktop.png` / `mobile.png`: local browser captures with RPC intentionally unavailable during failure-state tests. They do not depict public Fuji contract activity.
+Provider entry and redemption freeze while any protected position remains. Any account may settle a matured position from its detail page; provider cards expose an outstanding settlement queue. Owners then claim their separately reserved backing credit. Provider notice can begin before exposure clears. Redemption returns a proportional basket of selected backing and surrendered protected assets; earned fees are independent claims.
 
-External signing, funded Fuji transactions, independent security review and real tester sessions remain milestones, not completed evidence.
+At maturity the remaining protected asset and any upside are forfeited for the fixed entry claim. Partial exits before maturity retain the remainder's original opening time and proportional basis. Existing backing claims remain independent of oracle availability.
+
+## Reproducible local evidence
+
+- Solidity suite: 32 tests, including two 256 case fuzz regressions and specific fairness, expiry, partial-exit, rewards, transfer, factory, vault-unit, funding and deadline cases.
+- Exact-unit math: 5 tests, including tiny minimum-output rounding.
+- Public browser suite: direct routes at390px, nested funding continuation, Back/Forward, invalid pool rejection, missing-wallet feedback, scenario interaction, storage denial, and account/network resets.
+- Local signed lifecycle: 48 confirmed transactions, source hashes in `docs/evidence/local-journey.json`, explicitly chain 31337. No Fuji broadcast.
+- Isolated browser transaction test: faucet → provider deposit → funded buy → protection → partial gain exit → reward claim → activity → disconnect. Delayed-RPC regression proves an old asset quote cannot revive after selection changes.
+
+Start local Anvil on 8547, run `node scripts/local-journey.mjs --browser-ready`, then `node scripts/local-web.mjs` on 5184. The browser-ready option resets the disposable chain after evidence capture and creates fresh markets. Local chain state and `.local` files are ignored. Private keys are never needed in browser source.

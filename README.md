@@ -1,44 +1,64 @@
 # YieldShield Alpine
 
-An Avalanche Fuji pilot for AVAX exposure and explicit first-loss backing. A focused $10,000 Team1 Mini Grant project with its own codebase, asset registry, tests, website and deployment process.
+A distinct Avalanche implementation of YieldShield's split-risk markets: protected holders, capital providers, funded test trading, vault conversions and independently created pools.
 
 ## Current status — 11 October 2026
 
-The web application and contracts are implemented and tested. **Public Fuji contracts are not deployed yet.** The new test-only signer is unfunded and the owner chose to prepare deployment for later. The app shows this status and disables market writes until a deployment is independently read back and marked verified. The live Chainlink AVAX/USD reference can be read without deploying our contracts.
+**Fuji contracts are prepared but not deployed.** The owner explicitly deferred contract deployment. The public frontend presents all workflows with writes disabled until a deployment is configured and verified. Local test-chain and browser evidence must not be presented as Fuji activity. No grant award, external investment, independent audit, mainnet readiness or real adoption is claimed.
 
-- Chain: Fuji C-Chain, **43113**; gas/exposure asset: native test AVAX.
-- Backing: **Alpine Demo Dollar (aDEMO)**, a newly issued 6-decimal valueless test token, not Circle USDC.
-- Two distinct markets: live Chainlink reference; deterministic synthetic scenario (25 → 35 → 15 every 120 seconds).
-- Mainnet native USDC/WAVAX and BENQI sAVAX are researched future integrations, not active assets. No new YieldShield token is necessary.
-- No independent security audit, external adoption, funding award or mainnet readiness is claimed.
+The implemented catalog contains three protected assets and two backing choices:
 
-## How the bounded pilot works
+| Token | Role | Decimals | Actual backing |
+|---|---|---:|---|
+| Fuji AVAX | Native protection and exchange asset; gas |18| Native test-network asset |
+| awAVAX | Wrapped protection and exchange asset |18| 1:1 deposited Fuji AVAX; **not canonical WAVAX** |
+| vaDEMO | Protected vault receipts; exchange asset |18| ERC-4626 claims on aDEMO actually held by its vault |
+| aDEMO | Junior backing and exchange settlement |6| Valueless faucet token; **not USDC or dollar redeemable** |
+| bvaDEMO | Selectable vault-receipt junior backing |6| Separate funded ERC-4626 aDEMO vault |
 
-Junior providers seed backing before protected exposure opens. The market admits test AVAX only when it has 150% of all entry floors in backing. A holder can withdraw their AVAX after a 60-second delay, paying fees only on positive realized gain (10% junior, 1% creator, 1% protocol), or surrender all AVAX for the fixed entry amount of aDEMO.
+sAVAX and Circle USDC remain researched references, not active integrations. No new YieldShield governance token is required.
 
-**Each market lasts seven days and admits at most 100 positions. Before its maturity, holders must choose an exit to retain AVAX upside. At maturity every unclosed position settles to its fixed entry backing amount and surrenders ALL AVAX, including any subsequent upside, to juniors.** Anyone can settle each expired position; the owner receives pull-based backing credit. Unclaimed credits remain segregated from junior capital.
+## Product workflows
 
-Junior deposits and withdrawals pause while ANY protected position is active. This avoids unfair entry/exit around unrealized shortfalls. After all positions close or expire, juniors can redeem a proportional basket of aDEMO and junior AVAX after a 120-second notice. The notice is not a guarantee of immediate liquidity. No rolling epoch or automatic renewal is implemented.
+- Discover five featured markets, inspect terms and create a custom market with approved asset/backing pairs. Creation atomically credits the 500-backing-unit seed to its creator as provider shares.
+- Review a holder deposit, then manage partial/full asset or backing exits, transfer ownership, settle matured positions and claim segregated backing credit.
+- Provide capital, request/cancel withdrawal notice, redeem a proportional backing/asset basket, and independently claim earned gain fees. Creator/protocol fees are also pulled separately.
+- Buy or sell against actually funded exchange inventory with 0.3% fees, maximum spend/minimum proceeds and deadlines. Purchase confirmation carries the exact asset and amount into protection.
+- Wrap/unwrap AVAX and deposit/redeem both funded vaults with output limits. Faucet and funding detours retain the intended role, market and amount.
+- Inspect portfolio, local transaction history, exact token identities, network status and a clearly labeled scenario calculator.
+
+All pages have direct URLs, including `/protect`, `/provide`, `/markets`, `/pools/:key`, `/positions`, `/positions/:pool:id`, `/trade`, `/create-pool`, `/portfolio`, `/activity`, `/faucet`, `/assets`, `/status`, `/how-it-works` and `/legal`. Browser Back/Forward and fresh deep links are supported.
+
+## Material economic differences
+
+Provider entry/redemption **freezes while any protected position remains open**, preventing unrealized-loss NAV arbitrage. A finite, immutable epoch bounds this freeze: anyone can settle each remaining position after maturity. Forced settlement surrenders the remaining asset and its upside for the fixed entry-backing claim. Default epochs last seven days; factory-created epochs allow 1–30 days. Notice does not guarantee immediate liquidity.
+
+Partial exits preserve the proportional entry basis of the remaining position. Fees apply only to positive gains on the withdrawn slice. Rewards, creator/protocol fees, surrendered principal and unclaimed backing are separately accounted. A vault-backed floor is a fixed number of bvaDEMO receipts; the underlying aDEMO redeemable for those receipts can change. There is no fixed dollar guarantee or promised yield.
 
 ## Run and verify
 
-Node 24 and Foundry with Solidity 0.8.35 are used.
-
 ```sh
 npm ci --ignore-scripts
-npm run dev
-npm run build
+npm run dev                 # public pending-Fuji preview at 127.0.0.1:5181
+npm run build               # static output: dist/
 npm test
 npm run test:contracts
-npx playwright test
+npm run test:browser         # public routes, mobile, wallet and context regressions
 ```
 
-The static output is `dist/`. The website uses public RPC and the visitor's injected wallet; it has no server signer. Browser tests verify desktop/mobile layouts, disclosures, the interactive scenario model, the undeployed state and missing-wallet behavior. They are **not browser-signed Fuji transaction evidence**.
+For local transactions only:
 
-For the signed local lifecycle test, start `anvil --host 127.0.0.1 --port 8547 --silent` and run `node scripts/local-journey.mjs`. It creates disposable keys in memory, funds them on localhost, and verifies recipient balances through a full unwind. [Evidence](docs/evidence/local-journey.json) is explicitly **chain 31337, not Fuji**.
+```sh
+anvil --host 127.0.0.1 --port 8547 --silent
+node scripts/local-journey.mjs --browser-ready
+node scripts/local-web.mjs   # isolated local-chain preview at 127.0.0.1:5184
+ALPINE_LOCAL_E2E=1 npm run test:browser -- tests/browser/local-lifecycle.spec.ts
+```
 
-See [operations](docs/OPERATIONS.md), [research and budget](docs/RESEARCH_AND_SCOPE.md), [security notes](docs/SECURITY.md), and [provenance](docs/PROVENANCE.md).
+The local journey confirms 48 transactions and writes source-hash-bound [evidence](docs/evidence/local-journey.json). Its optional browser-ready mode resets the disposable chain after recording evidence and prepares fresh markets. Browser tests use Anvil's publicly known local development accounts through an injected test provider; no private keys are embedded in the app or committed. Production builds cannot enable the local-chain configuration.
+
+See [operations](docs/OPERATIONS.md), [security](docs/SECURITY.md), [research](docs/RESEARCH_AND_SCOPE.md), and [provenance](docs/PROVENANCE.md).
 
 ## License
 
-MIT, copyright YieldShield. Original implementation informed by the existing YieldShield product design. OpenZeppelin, React, viem and Vite retain their upstream licenses. No private deployment registry or credentials were imported from the other chain projects.
+MIT, copyright YieldShield. Independently authored from YieldShield's existing product design. OpenZeppelin, React, React Router, viem and Vite retain their upstream licenses. No credentials, private deployment registry or historical contracts were imported from the other chain projects.

@@ -1,5 +1,8 @@
 # YieldShield Alpine — Avalanche Mini Grant scope
 
+> Implementation update, 11 October 2026: the initial bounded proposal below has been expanded at the owner's request to include dedicated holder/provider workflows, partial exits, transfers, indexed fee claims, factory creation, a funded exchange, awAVAX and ERC-4626 demo vaults. Current behavior and explicit test-token identities are documented in README.md and OPERATIONS.md. The original research/budget notes below are historical planning context; they do not claim Fuji deployment or real sAVAX/USDC integration.
+
+
 Research date: 11 October 2026. Grant requested: $10,000, milestone based. No funding, partnership, independent audit, user adoption or mainnet readiness claimed.
 
 ## Why Avalanche
