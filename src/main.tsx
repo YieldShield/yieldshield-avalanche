@@ -13,6 +13,7 @@ import { RoleFlow, Positions, PositionDetail } from "./Workflows";
 import { Markets, PoolDetail } from "./Markets";
 import { RouteLink, Notice, Empty } from "./ui";
 import "./style.css";
+import { Trade } from "./Trade";
 function App() {
   const { account, connect, message, setMessage } = useAlpine();
   const location = useLocation();
