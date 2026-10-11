@@ -27,6 +27,13 @@ export function routeName(path: string) {
         : "Page not found")
   );
 }
+export function decodeRoutePart(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
 /** Restore orientation after client navigation without moving focus during input edits. */
 export function RouteOrientation() {
   const location = useLocation(),
@@ -40,7 +47,7 @@ export function RouteOrientation() {
     let observer: MutationObserver | undefined;
     const orient = () => {
       const target = location.hash
-        ? document.getElementById(decodeURIComponent(location.hash.slice(1)))
+        ? document.getElementById(decodeRoutePart(location.hash.slice(1)))
         : document.querySelector<HTMLElement>("#main-content h1");
       if (!target) return false;
       target.setAttribute("tabindex", "-1");

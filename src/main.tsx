@@ -19,7 +19,7 @@ const CreatePool = lazy(() =>
 );
 import { Portfolio, Activity, Faucet, Status, Assets } from "./AccountPages";
 import { Guide, Legal } from "./Guide";
-import { RouteOrientation, routeName } from "./navigation";
+import { RouteOrientation, routeName, decodeRoutePart } from "./navigation";
 function App() {
   const { account, connect, message, setMessage, markets, loading } =
     useAlpine();
@@ -31,10 +31,10 @@ function App() {
     selected &&
     !markets.some((m) => m.key.toLowerCase() === selected.toLowerCase());
   const pathPool = location.pathname.startsWith("/pools/")
-    ? decodeURIComponent(location.pathname.slice(7))
+    ? decodeRoutePart(location.pathname.slice(7))
     : location.pathname.startsWith("/positions/") &&
         location.pathname.includes(":")
-      ? decodeURIComponent(
+      ? decodeRoutePart(
           location.pathname.slice(11).split(":").slice(0, -1).join(":"),
         )
       : null;
