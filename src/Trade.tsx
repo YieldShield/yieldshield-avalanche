@@ -1,4 +1,5 @@
 import { useReviewGuard } from "./review";
+import { consumeReview } from "./lifecycle.mjs";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { formatUnits, type Address } from "viem";
@@ -111,6 +112,8 @@ export function Trade() {
     if (!q) return;
     setWorking(true);
     try {
+      consumeReview(q.assertCurrent);
+      setQ(null);
       if (
         q.account !== account ||
         q.identity !== identity ||
@@ -463,6 +466,8 @@ export function Conversions() {
     const assertCurrent = guard();
     if (!q) return;
     try {
+      consumeReview(q.assertCurrent);
+      setQ(null);
       if (
         q.identity !== identity ||
         q.account !== account ||

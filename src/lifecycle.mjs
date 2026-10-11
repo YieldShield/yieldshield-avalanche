@@ -43,3 +43,14 @@ export function createReviewScope() {
     },
   };
 }
+
+const consumedReviews = new WeakSet();
+/** Signing attempts consume their review, even if a broadcast receipt remains unknown. */
+export function consumeReview(assertCurrent) {
+  assertCurrent();
+  if (consumedReviews.has(assertCurrent))
+    throw new Error(
+      "This review was already submitted. Check Activity and review again before retrying.",
+    );
+  consumedReviews.add(assertCurrent);
+}

@@ -1,4 +1,5 @@
 import { useReviewGuard } from "./review";
+import { consumeReview } from "./lifecycle.mjs";
 import { useState, useEffect } from "react";
 import { decodeEventLog } from "viem";
 import {
@@ -92,6 +93,8 @@ export function CreatePool() {
         review.deadline < BigInt(Math.floor(Date.now() / 1000))
       )
         throw new Error("Review expired or wallet changed.");
+      consumeReview(review.assertCurrent);
+      setReview(null);
       await approve(collateral, config.factory, review.seed);
       assertCurrent();
       review.assertCurrent();

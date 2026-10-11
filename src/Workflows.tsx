@@ -1,4 +1,5 @@
 import { useReviewGuard } from "./review";
+import { consumeReview } from "./lifecycle.mjs";
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { decodeEventLog, formatUnits, isAddress, type Address } from "viem";
@@ -149,7 +150,8 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
     setError("");
     try {
       assertCurrent();
-      quote.assertCurrent();
+      consumeReview(quote.assertCurrent);
+      setQuote(null);
       await valid(quote);
       if (provider || asset.address) {
         const token = provider ? market.backing : asset.address;
@@ -537,7 +539,8 @@ export function PositionDetail() {
     try {
       if (!q || !m?.address || !p) return;
       assertCurrent();
-      q.assertCurrent();
+      consumeReview(q.assertCurrent);
+      setQ(null);
       await valid(q);
       await transact(
         mode === "transfer" ? "Transfer position" : `Partial ${mode} exit`,
@@ -747,7 +750,8 @@ export function ProviderPosition({ marketKey }: { marketKey: string }) {
     if (!q) return;
     try {
       assertCurrent();
-      q.assertCurrent();
+      consumeReview(q.assertCurrent);
+      setQ(null);
       await valid(q);
       await transact(
         "Redeem provider shares",

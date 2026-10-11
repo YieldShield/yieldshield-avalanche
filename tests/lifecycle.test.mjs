@@ -60,3 +60,24 @@ test("changing asset away and back cannot resurrect an in-flight quote", () => {
   scope.update("wrapped");
   assert.throws(assertCurrent, /changed/);
 });
+
+import { consumeReview } from "../src/lifecycle.mjs";
+test("submitted but unknown transactions cannot replay the same reviewed intent", async () => {
+  const scope = createReviewScope(),
+    assertCurrent = scope.capture(),
+    receipt = deferred();
+  let broadcasts = 0;
+  async function confirm() {
+    consumeReview(assertCurrent);
+    broadcasts++;
+    await receipt.promise;
+    throw new Error("Receipt unknown; inspect Activity hash");
+  }
+  const pending = confirm();
+  await assert.rejects(confirm(), /already submitted/);
+  assert.equal(broadcasts, 1);
+  receipt.resolve();
+  await assert.rejects(pending, /Receipt unknown/);
+  await assert.rejects(confirm(), /already submitted/);
+  assert.equal(broadcasts, 1);
+});
