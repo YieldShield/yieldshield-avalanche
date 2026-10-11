@@ -1,3 +1,4 @@
+import { useReviewGuard } from "./review";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { decodeEventLog, formatUnits, isAddress, type Address } from "viem";
@@ -27,6 +28,7 @@ import {
 } from "./ui";
 import { minimumOutput, safeError } from "./math.mjs";
 type Quote = {
+  assertCurrent: () => void;
   amount: bigint;
   output: bigint;
   secondary?: bigint;
@@ -63,6 +65,7 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
     [error, setError] = useState(""),
     [success, setSuccess] = useState<string | null>(null),
     [working, setWorking] = useState(false);
+  const guard = useReviewGuard([amount, market.key, identity, role]);
   const asset = assets.find((a) => a.key === market.asset)!;
   const provider = role === "provide",
     symbol = provider ? market.backingSymbol : asset.symbol;
@@ -84,6 +87,7 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
     [market.key, params.get("amount")],
   );
   async function review() {
+    const assertCurrent = guard();
     setWorking(true);
     setError("");
     try {
@@ -122,7 +126,9 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
           );
       }
       if (out === 0n) throw new Error("Amount is too small.");
+      assertCurrent();
       setQuote({
+        assertCurrent,
         amount: n,
         output: out,
         minimum: minimumOutput(out),
@@ -136,16 +142,21 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
     }
   }
   async function confirm() {
+    const assertCurrent = guard();
     if (!quote || !market.address) return;
     setWorking(true);
     setError("");
     try {
+      assertCurrent();
+      quote.assertCurrent();
       await valid(quote);
       if (provider || asset.address) {
         const token = provider ? market.backing : asset.address;
         if (token && token !== "0x0000000000000000000000000000000000000000")
           await approve(token, market.address, quote.amount);
       }
+      assertCurrent();
+      quote.assertCurrent();
       await valid(quote);
       const receipt = await transact(
         provider ? "Provide capital" : "Protect asset",
@@ -251,15 +262,15 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
                     items={[
                       [
                         "You deposit",
-                        `${fmt(quote.amount, provider ? 6 : 18, 8)} ${symbol}`,
+                        `${formatUnits(quote.amount, provider ? 6 : 18)} ${symbol}`,
                       ],
                       [
                         provider ? "Provider shares" : "Entry claim",
-                        `${fmt(quote.output, provider ? 18 : 6, 8)} ${provider ? "shares" : market.backingSymbol}`,
+                        `${formatUnits(quote.output, provider ? 18 : 6)} ${provider ? "shares" : market.backingSymbol}`,
                       ],
                       [
                         "Minimum accepted (0.5% tolerance)",
-                        `${fmt(quote.minimum, provider ? 18 : 6, 8)} ${provider ? "shares" : market.backingSymbol}`,
+                        `${formatUnits(quote.minimum, provider ? 18 : 6)} ${provider ? "shares" : market.backingSymbol}`,
                       ],
                       [
                         "Review expires",
@@ -327,7 +338,10 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
           />
           <Risk provider={provider} backing={market.backingSymbol} />
           <div className="button-row">
-            <RouteLink className="secondary-button" to="/trade">
+            <RouteLink
+              className="secondary-button"
+              to={`/trade?pool=${market.key}&asset=${market.asset}&amount=${encodeURIComponent(amount)}&return=${role}${provider && market.backingSymbol === "bvaDEMO" ? "&convert=deposit-backing" : ""}`}
+            >
               Get an asset
             </RouteLink>
             <RouteLink className="secondary-button" to="/create-pool">
@@ -340,7 +354,8 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
   );
 }
 export function Positions() {
-  const { markets, snapshots, account, ready } = useAlpine();
+  const { markets, snapshots, account, ready, errors, loading } = useAlpine();
+  const incomplete = ready && (loading || Object.keys(errors).length > 0);
   const own = markets.flatMap((m) =>
     (snapshots[m.key]?.positions || [])
       .filter((p) => p.owner.toLowerCase() === account?.toLowerCase())
@@ -368,7 +383,14 @@ export function Positions() {
           Provide capital
         </RouteLink>
       </div>
-      {!account || (!own.length && !providers.length) ? (
+      {incomplete && (
+        <p className="notice">
+          Position data is loading or incomplete. A failed registry or market
+          read does not mean your positions are empty. See Network status and
+          refresh.
+        </p>
+      )}
+      {!account || (!incomplete && !own.length && !providers.length) ? (
         <Empty
           title={
             !account ? "Connect to see your positions" : "No open positions yet"
@@ -425,6 +447,7 @@ export function PositionDetail() {
     setQ(null);
     setError("");
   }, [amount, mode, recipient, identity, key]);
+  const guard = useReviewGuard([amount, mode, recipient, identity, key]);
   if (!m || !s || !p)
     return (
       <>
@@ -448,6 +471,7 @@ export function PositionDetail() {
     own = p.owner.toLowerCase() === account?.toLowerCase(),
     matured = BigInt(Math.floor(Date.now() / 1000)) >= s.maturity;
   async function review() {
+    const assertCurrent = guard();
     try {
       if (!account || !m?.address || !p) throw new Error("Connect first.");
       if (mode === "transfer") {
@@ -456,7 +480,9 @@ export function PositionDetail() {
           recipient.toLowerCase() === account.toLowerCase()
         )
           throw new Error("Enter a different valid recipient address.");
+        assertCurrent();
         setQ({
+          assertCurrent,
           amount: p.amount,
           output: p.floor,
           minimum: 0n,
@@ -475,7 +501,9 @@ export function PositionDetail() {
         ]);
       } else output = n === p.amount ? p.floor : (p.floor * n) / p.amount;
       if (!output) throw new Error("Exit amount is too small.");
+      assertCurrent();
       setQ({
+        assertCurrent,
         amount: n,
         output,
         minimum: minimumOutput(output),
@@ -487,8 +515,11 @@ export function PositionDetail() {
     }
   }
   async function confirm() {
+    const assertCurrent = guard();
     try {
       if (!q || !m?.address || !p) return;
+      assertCurrent();
+      q.assertCurrent();
       await valid(q);
       await transact(
         mode === "transfer" ? "Transfer position" : `Partial ${mode} exit`,
@@ -616,7 +647,7 @@ export function PositionDetail() {
                         mode === "transfer" ? "New owner" : "Minimum received",
                         mode === "transfer"
                           ? recipient
-                          : `${fmt(q.minimum, mode === "asset" ? 18 : 6, 8)} ${mode === "asset" ? asset.symbol : m.backingSymbol}`,
+                          : `${formatUnits(q.minimum, mode === "asset" ? 18 : 6)} ${mode === "asset" ? asset.symbol : m.backingSymbol}`,
                       ],
                       ["Price tolerance", "0.5% maximum reduction"],
                     ]}
@@ -654,6 +685,7 @@ export function ProviderPosition({ marketKey }: { marketKey: string }) {
     [q, setQ] = useState<Quote | null>(null),
     [error, setError] = useState("");
   useEffect(() => setQ(null), [amount, identity, marketKey]);
+  const guard = useReviewGuard([amount, identity, marketKey]);
   if (!s || !account) return null;
   const symbol = assets.find((a) => a.key === m.asset)!.symbol;
   async function action(name: string, label: string, args: unknown[] = []) {
@@ -665,6 +697,7 @@ export function ProviderPosition({ marketKey }: { marketKey: string }) {
     }
   }
   async function review() {
+    const assertCurrent = guard();
     try {
       const n = units(amount);
       const [out, asset] = await read(
@@ -673,7 +706,9 @@ export function ProviderPosition({ marketKey }: { marketKey: string }) {
         "previewJuniorWithdrawal",
         [account, n],
       );
+      assertCurrent();
       setQ({
+        assertCurrent,
         amount: n,
         output: out,
         secondary: asset,
@@ -687,8 +722,11 @@ export function ProviderPosition({ marketKey }: { marketKey: string }) {
     }
   }
   async function confirm() {
+    const assertCurrent = guard();
     if (!q) return;
     try {
+      assertCurrent();
+      q.assertCurrent();
       await valid(q);
       await transact(
         "Redeem provider shares",
@@ -791,11 +829,11 @@ export function ProviderPosition({ marketKey }: { marketKey: string }) {
                 items={[
                   [
                     "Minimum backing",
-                    `${fmt(q.minimum, 6, 6)} ${m.backingSymbol}`,
+                    `${formatUnits(q.minimum, 6)} ${m.backingSymbol}`,
                   ],
                   [
                     "Minimum surrendered asset",
-                    `${fmt(q.secondaryMinimum || 0n, 18, 8)} ${symbol}`,
+                    `${formatUnits(q.secondaryMinimum || 0n, 18)} ${symbol}`,
                   ],
                 ]}
               />

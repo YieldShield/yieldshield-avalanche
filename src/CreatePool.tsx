@@ -1,3 +1,4 @@
+import { useReviewGuard } from "./review";
 import { useState, useEffect } from "react";
 import { decodeEventLog } from "viem";
 import {
@@ -19,6 +20,7 @@ export function CreatePool() {
     [source, setSource] = useState("reference"),
     [terms, setTerms] = useState(DEFAULT_TERMS),
     [review, setReview] = useState<{
+      assertCurrent: () => void;
       deadline: bigint;
       seed: bigint;
       identity: number;
@@ -38,7 +40,9 @@ export function CreatePool() {
         : asset === "native" && source === "scenario"
           ? config.scenarioOracle
           : config.referenceOracle;
+  const guard = useReviewGuard([asset, backing, source, terms, identity]);
   async function check() {
+    const assertCurrent = guard();
     try {
       if (!account) throw new Error("Connect first.");
       if (Object.values(terms).some((v) => !Number.isSafeInteger(v)))
@@ -68,7 +72,9 @@ export function CreatePool() {
         terms.juniorNotice > 86400
       )
         throw new Error("Choose terms inside the displayed factory limits.");
+      assertCurrent();
       setReview({
+        assertCurrent,
         deadline: BigInt(Math.floor(Date.now() / 1000) + 600),
         seed,
         identity,
@@ -78,6 +84,7 @@ export function CreatePool() {
     }
   }
   async function confirm() {
+    const assertCurrent = guard();
     try {
       if (
         !review ||
@@ -86,6 +93,8 @@ export function CreatePool() {
       )
         throw new Error("Review expired or wallet changed.");
       await approve(collateral, config.factory, review.seed);
+      assertCurrent();
+      review.assertCurrent();
       const receipt = await transact(
         "Create and seed market",
         config.factory,

@@ -1,4 +1,6 @@
+import { useReviewGuard } from "./review";
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { formatUnits, type Address } from "viem";
 import {
   assets,
@@ -16,6 +18,7 @@ import { useAlpine } from "./state";
 import { PageTitle, Amount, Facts, ActionButton, RouteLink } from "./ui";
 import { minimumOutput, safeError } from "./math.mjs";
 type Quote = {
+  assertCurrent: () => void;
   amount: bigint;
   output: bigint;
   bound: bigint;
@@ -25,21 +28,27 @@ type Quote = {
   identity: number;
 };
 export function Trade() {
-  const { account, identity, balances, approve, transact } = useAlpine();
-  const [assetKey, setAssetKey] = useState("native"),
+  const [params] = useSearchParams();
+  const { account, identity, balances, approve, transact, markets } =
+    useAlpine();
+  const [assetKey, setAssetKey] = useState(params.get("asset") || "native"),
     [side, setSide] = useState<"buy" | "sell">("buy"),
-    [amount, setAmount] = useState(""),
+    [amount, setAmount] = useState(
+      params.get("return") === "provide" ? "" : params.get("amount") || "",
+    ),
     [q, setQ] = useState<Quote | null>(null),
     [error, setError] = useState(""),
     [success, setSuccess] = useState<string | null>(null),
     [working, setWorking] = useState(false);
-  const asset = assets.find((a) => a.key === assetKey)!;
+  const asset = assets.find((a) => a.key === assetKey) || assets[0];
+  const guard = useReviewGuard([assetKey, side, amount, identity]);
   useEffect(() => {
     setQ(null);
     setSuccess(null);
     setError("");
   }, [assetKey, side, amount, identity]);
   async function review() {
+    const assertCurrent = guard();
     setWorking(true);
     try {
       if (!account || !config.exchange || !asset.address)
@@ -65,7 +74,9 @@ export function Trade() {
       const balance = balances[side === "buy" ? "backing" : assetKey];
       if (balance === undefined || balance < (side === "buy" ? out : n))
         throw new Error("Insufficient wallet balance.");
+      assertCurrent();
       setQ({
+        assertCurrent,
         amount: n,
         output: out,
         fee,
@@ -82,6 +93,7 @@ export function Trade() {
     }
   }
   async function confirm() {
+    const assertCurrent = guard();
     if (!q) return;
     setWorking(true);
     try {
@@ -106,6 +118,17 @@ export function Trade() {
         await approve(asset.address!, config.exchange, q.amount);
       if (q.deadline < BigInt(Math.floor(Date.now() / 1000)))
         throw new Error("Review expired while approving. Review again.");
+      const [freshOutput] = await read(config.exchange, exchangeAbi, "quote", [
+        asset.address,
+        q.amount,
+        side === "buy",
+      ]);
+      if (side === "buy" ? freshOutput > q.bound : freshOutput < q.bound)
+        throw new Error(
+          "Quote changed outside your reviewed limit after approval. Review again.",
+        );
+      assertCurrent();
+      q.assertCurrent();
       await transact(
         `${side === "buy" ? "Buy" : "Sell"} ${asset.symbol}`,
         config.exchange,
@@ -124,7 +147,7 @@ export function Trade() {
       );
       setSuccess(
         side === "buy"
-          ? `/protect?pool=${assetKey === "native" ? "reference" : assetKey}&amount=${formatUnits(q.amount, 18)}`
+          ? `/protect?pool=${markets.find((m) => m.key === params.get("pool") && m.asset === assetKey)?.key || (assetKey === "native" ? "reference" : assetKey)}&amount=${formatUnits(q.amount, 18)}`
           : "sold",
       );
       setQ(null);
@@ -141,6 +164,18 @@ export function Trade() {
         title="Trade. Then protect."
         description="Buy or sell funded test assets for aDEMO. Review an actual quote, a 0.3% trade fee and an enforceable price limit before signing."
       />
+      {params.get("return") && (
+        <RouteLink
+          className="hero-link"
+          to={`/${params.get("return") === "provide" ? "provide" : "protect"}?pool=${params.get("pool") || "reference"}&amount=${encodeURIComponent(params.get("amount") || "")}`}
+        >
+          Return to{" "}
+          {params.get("return") === "provide"
+            ? "capital provision"
+            : "protection"}{" "}
+          with your amount ↗
+        </RouteLink>
+      )}
       <div className="market-grid">
         <section className="action-card">
           <h3>Test-asset exchange</h3>
@@ -308,9 +343,12 @@ export function Trade() {
   );
 }
 export function Conversions() {
+  const [params] = useSearchParams();
   const { account, identity, balances, approve, transact } = useAlpine();
-  const [kind, setKind] = useState("wrap"),
-    [amount, setAmount] = useState(""),
+  const [kind, setKind] = useState(params.get("convert") || "wrap"),
+    [amount, setAmount] = useState(
+      params.get("return") === "provide" ? params.get("amount") || "" : "",
+    ),
     [q, setQ] = useState<Quote | null>(null),
     [error, setError] = useState(""),
     [success, setSuccess] = useState("");
@@ -319,6 +357,7 @@ export function Conversions() {
     setError("");
     setSuccess("");
   }, [kind, amount, identity]);
+  const guard = useReviewGuard([kind, amount, identity]);
   const wrapping = kind === "wrap" || kind === "unwrap",
     deposit = kind === "deposit" || kind === "deposit-backing",
     backingVault = kind.includes("backing"),
@@ -357,6 +396,7 @@ export function Conversions() {
         ? "backing-vault"
         : "vault";
   async function review() {
+    const assertCurrent = guard();
     try {
       if (!account || !target)
         throw new Error("Connect to the deployed conversion contracts.");
@@ -372,7 +412,9 @@ export function Conversions() {
             [n],
           );
       if (!out) throw new Error("Conversion amount too small.");
+      assertCurrent();
       setQ({
+        assertCurrent,
         amount: n,
         output: out,
         bound: minimumOutput(out),
@@ -386,6 +428,7 @@ export function Conversions() {
     }
   }
   async function confirm() {
+    const assertCurrent = guard();
     if (!q) return;
     try {
       if (
@@ -396,6 +439,8 @@ export function Conversions() {
         throw new Error("Review expired or wallet changed.");
       if (!wrapping && deposit)
         await approve(config.backingToken, target, q.amount);
+      assertCurrent();
+      q.assertCurrent();
       await transact(
         `${kind} conversion`,
         target,
@@ -468,11 +513,11 @@ export function Conversions() {
               items={[
                 [
                   "Expected output",
-                  `${fmt(q.output, outDecimals, 8)} ${outSymbol}`,
+                  `${formatUnits(q.output, outDecimals)} ${outSymbol}`,
                 ],
                 [
                   "Minimum accepted",
-                  `${fmt(wrapping ? q.output : q.bound, outDecimals, 8)} ${outSymbol}`,
+                  `${formatUnits(wrapping ? q.output : q.bound, outDecimals)} ${outSymbol}`,
                 ],
               ]}
             />
