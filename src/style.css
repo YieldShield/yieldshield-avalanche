@@ -1955,3 +1955,18 @@ h3 {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+.deployment-notice {
+  margin: 0;
+}
+@media (max-width: 580px) {
+  .deployment-notice {
+    padding: 10px 12px;
+  }
+  .page-title {
+    padding: 22px 0;
+  }
+  .page-title p {
+    margin-top: 10px;
+  }
+}

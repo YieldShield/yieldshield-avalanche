@@ -1,6 +1,6 @@
 import { type ReactNode, useId } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { assets, config, fmt, type Market } from "./chain";
+import { assets, config, fmt, localMode, type Market } from "./chain";
 import { useAlpine } from "./state";
 export function useMarket() {
   const a = useAlpine();
@@ -93,15 +93,21 @@ export function Facts({ items }: { items: [string, ReactNode][] }) {
 export function Notice() {
   const { ready } = useAlpine();
   return !ready ? (
-    <div className="notice">
+    <div className="notice deployment-notice">
+      <strong>Valueless test assets.</strong>{" "}
       {config.factory
-        ? "Contract verification pending. Transactions are disabled."
-        : "Fuji deployment pending. Deposits and transactions are disabled."}{" "}
+        ? "Contract verification pending. Transactions disabled."
+        : "Fuji deployment pending. Transactions disabled."}{" "}
       <RouteLink className="inline-link" to="/status">
         Network status
       </RouteLink>
     </div>
-  ) : null;
+  ) : (
+    <div className="testnet-note">
+      <span>{localMode ? "LOCAL DEMO" : "TESTNET ONLY"}</span>
+      Valueless test assets.
+    </div>
+  );
 }
 export function ActionButton({
   children,

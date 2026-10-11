@@ -57,10 +57,6 @@ function App() {
           </div>
         </header>
         <div className="content">
-          <div className="testnet-note">
-            <span>{localMode ? "LOCAL DEMO" : "TESTNET ONLY"}</span>Valueless
-            test assets.
-          </div>
           <Notice />
           <PortfolioNavigation />
           {message && (
