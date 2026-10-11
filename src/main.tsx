@@ -1,4 +1,4 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import {
   BrowserRouter,
@@ -13,8 +13,10 @@ import { RoleFlow, Positions, PositionDetail } from "./Workflows";
 import { Markets, PoolDetail } from "./Markets";
 import { RouteLink, Notice, Empty } from "./ui";
 import "./style.css";
-import { Trade } from "./Trade";
-import { CreatePool } from "./CreatePool";
+const Trade = lazy(() => import("./Trade").then((m) => ({ default: m.Trade })));
+const CreatePool = lazy(() =>
+  import("./CreatePool").then((m) => ({ default: m.CreatePool })),
+);
 import { Portfolio, Activity, Faucet, Status, Assets } from "./AccountPages";
 import { Guide, Legal } from "./Guide";
 function App() {
@@ -27,7 +29,12 @@ function App() {
     !markets.some((m) => m.key.toLowerCase() === selected.toLowerCase());
   const pathPool = location.pathname.startsWith("/pools/")
     ? decodeURIComponent(location.pathname.slice(7))
-    : null;
+    : location.pathname.startsWith("/positions/") &&
+        location.pathname.includes(":")
+      ? decodeURIComponent(
+          location.pathname.slice(11).split(":").slice(0, -1).join(":"),
+        )
+      : null;
   const mismatchedPool =
     pathPool && selected && pathPool.toLowerCase() !== selected.toLowerCase();
   const nav = [
@@ -86,7 +93,7 @@ function App() {
             </span>
             <button className="wallet-button" onClick={() => void connect()}>
               {account ? short(account) : "Connect wallet"}
-              <span>↗</span>
+              <span aria-hidden="true">↗</span>
             </button>
           </div>
         </header>
@@ -122,34 +129,36 @@ function App() {
               available. <a href="/markets">Choose a market</a>.
             </Empty>
           ) : (
-            <Routes>
-              <Route path="/" element={<Markets home />} />
-              <Route path="/markets" element={<Markets />} />
-              <Route path="/pools/:key" element={<PoolDetail />} />
-              <Route path="/protect" element={<RoleFlow role="protect" />} />
-              <Route path="/provide" element={<RoleFlow role="provide" />} />
-              <Route path="/positions" element={<Positions />} />
-              <Route path="/positions/:key" element={<PositionDetail />} />
-              <Route path="/trade" element={<Trade />} />
-              <Route path="/create-pool" element={<CreatePool />} />
-              <Route path="/portfolio" element={<Portfolio />} />
-              <Route path="/activity" element={<Activity />} />
-              <Route path="/faucet" element={<Faucet />} />
-              <Route path="/assets" element={<Assets />} />
-              <Route path="/status" element={<Status />} />
-              <Route path="/how-it-works" element={<Guide />} />
-              <Route path="/learn/scenarios" element={<Guide />} />
-              <Route path="/legal" element={<Legal />} />
-              <Route
-                path="*"
-                element={
-                  <Empty title="Page not found">
-                    Explore <RouteLink to="/markets">markets</RouteLink> to find
-                    a route.
-                  </Empty>
-                }
-              />
-            </Routes>
+            <Suspense fallback={<p className="notice">Loading page…</p>}>
+              <Routes>
+                <Route path="/" element={<Markets home />} />
+                <Route path="/markets" element={<Markets />} />
+                <Route path="/pools/:key" element={<PoolDetail />} />
+                <Route path="/protect" element={<RoleFlow role="protect" />} />
+                <Route path="/provide" element={<RoleFlow role="provide" />} />
+                <Route path="/positions" element={<Positions />} />
+                <Route path="/positions/:key" element={<PositionDetail />} />
+                <Route path="/trade" element={<Trade />} />
+                <Route path="/create-pool" element={<CreatePool />} />
+                <Route path="/portfolio" element={<Portfolio />} />
+                <Route path="/activity" element={<Activity />} />
+                <Route path="/faucet" element={<Faucet />} />
+                <Route path="/assets" element={<Assets />} />
+                <Route path="/status" element={<Status />} />
+                <Route path="/how-it-works" element={<Guide />} />
+                <Route path="/learn/scenarios" element={<Guide />} />
+                <Route path="/legal" element={<Legal />} />
+                <Route
+                  path="*"
+                  element={
+                    <Empty title="Page not found">
+                      Explore <RouteLink to="/markets">markets</RouteLink> to
+                      find a route.
+                    </Empty>
+                  }
+                />
+              </Routes>
+            </Suspense>
           )}
           <footer>
             <span>▲ YieldShield Alpine</span>
