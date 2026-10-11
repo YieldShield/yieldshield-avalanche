@@ -14,6 +14,7 @@ import { Markets, PoolDetail } from "./Markets";
 import { RouteLink, Notice, Empty } from "./ui";
 import "./style.css";
 import { Trade } from "./Trade";
+import { CreatePool } from "./CreatePool";
 function App() {
   const { account, connect, message, setMessage } = useAlpine();
   const location = useLocation();
