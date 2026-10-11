@@ -10,3 +10,5 @@ contracts/cache/
 playwright-report/
 test-results/
 .vercel
+
+.local/

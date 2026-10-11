@@ -8,3 +8,5 @@ contracts/cache
 docs/grants
 test-results
 playwright-report
+
+.local
