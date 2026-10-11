@@ -58,7 +58,14 @@ contract AlpinePoolTest {
         vm.warp(10000);
         token = new AlpineDemoDollar();
         oracle = new MutableOracle();
-        pool = new AlpinePool(address(token), address(oracle), CREATOR, PROTOCOL);
+        pool = new AlpinePool(
+            address(token),
+            address(oracle),
+            CREATOR,
+            PROTOCOL,
+            address(0),
+            AlpinePool.Terms(15000, 1000, 100, 7 days, 60, 120)
+        );
         vm.deal(ALICE, 100 ether);
         vm.deal(BOB, 100 ether);
         vm.startPrank(BOB);
@@ -80,8 +87,8 @@ contract AlpinePoolTest {
         vm.prank(ALICE);
         pool.exitBacking(id);
         require(token.balanceOf(ALICE) == 25e6, "entry floor");
-        require(pool.juniorAvax() == 1 ether && pool.totalBacking() == 975e6, "inventory");
-        require(pool.reservedBacking() == 0 && pool.protectedAvax() == 0, "release");
+        require(pool.juniorInventory() == 1 ether && pool.totalBacking() == 975e6, "inventory");
+        require(pool.reservedBacking() == 0 && pool.protectedBalance() == 0, "release");
         vm.prank(ALICE);
         vm.expectRevert(AlpinePool.NotOwner.selector);
         pool.exitBacking(id);
@@ -96,8 +103,10 @@ contract AlpinePoolTest {
         vm.prank(ALICE);
         pool.exitAvax(id, out);
         require(ALICE.balance - before == out, "recipient");
-        require(CREATOR.balance == 0.005 ether && PROTOCOL.balance == 0.005 ether, "fee recipients");
-        require(pool.juniorAvax() == 0.05 ether && address(pool).balance == 0.05 ether, "junior fee");
+        require(
+            pool.claimableFees(CREATOR) == 0.005 ether && pool.claimableFees(PROTOCOL) == 0.005 ether, "fee recipients"
+        );
+        require(pool.rewardInventory() == 0.05 ether && address(pool).balance == 0.06 ether, "junior fee");
     }
 
     function testNoGainNoFee() public {
@@ -105,7 +114,7 @@ contract AlpinePoolTest {
         oracle.set(15e6);
         vm.prank(ALICE);
         pool.exitAvax(id, 1 ether);
-        require(pool.juniorAvax() == 0 && CREATOR.balance == 0, "no loss fee");
+        require(pool.juniorInventory() == 0 && CREATOR.balance == 0, "no loss fee");
     }
 
     function testBackingExitDoesNotDependOnOracle() public {
@@ -139,7 +148,7 @@ contract AlpinePoolTest {
         vm.prank(BOB);
         pool.withdrawJunior(amount, 975e6, 1 ether);
         require(token.balanceOf(BOB) == 9975e6 && BOB.balance - before == 1 ether, "basket");
-        require(pool.totalShares() == 0 && pool.totalBacking() == 0 && pool.juniorAvax() == 0, "empty");
+        require(pool.totalShares() == 0 && pool.totalBacking() == 0 && pool.juniorInventory() == 0, "empty");
     }
 
     function testNewJuniorUsesCombinedAssetNAV() public {
@@ -181,7 +190,11 @@ contract AlpinePoolTest {
         oracle.set(price);
         vm.prank(ALICE);
         pool.exitAvax(id, 0);
-        require(address(pool).balance == pool.protectedAvax() + pool.juniorAvax(), "native accounting");
+        require(
+            address(pool).balance
+                == pool.protectedBalance() + pool.juniorInventory() + pool.rewardInventory() + pool.otherFeeInventory(),
+            "native accounting"
+        );
         require(token.balanceOf(address(pool)) == pool.totalBacking(), "backing accounting");
         require(pool.totalBacking() >= pool.requiredBacking(pool.reservedBacking()), "reserve ratio");
     }
@@ -262,6 +275,13 @@ contract AlpinePoolTest {
     function testMainnetDeploymentRejected() public {
         vm.chainId(43114);
         vm.expectRevert();
-        new AlpinePool(address(token), address(oracle), CREATOR, PROTOCOL);
+        new AlpinePool(
+            address(token),
+            address(oracle),
+            CREATOR,
+            PROTOCOL,
+            address(0),
+            AlpinePool.Terms(15000, 1000, 100, 7 days, 60, 120)
+        );
     }
 }
