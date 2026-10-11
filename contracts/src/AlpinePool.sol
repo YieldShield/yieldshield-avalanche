@@ -141,6 +141,15 @@ contract AlpinePool is ReentrancyGuard {
         return _depositJunior(msg.sender, amount, minShares);
     }
 
+    function depositJuniorBounded(uint256 amount, uint256 minShares, uint256 deadline)
+        external
+        nonReentrant
+        returns (uint256)
+    {
+        require(block.timestamp <= deadline, "DEADLINE");
+        return _depositJunior(msg.sender, amount, minShares);
+    }
+
     /// @notice The creating factory atomically credits its creation seed to the creator, not to itself.
     function seedCreator(uint256 amount) external nonReentrant returns (uint256) {
         require(msg.sender == initializer && totalShares == 0 && nextPositionId == 1, "INITIAL_SEED_ONLY");
@@ -188,6 +197,18 @@ contract AlpinePool is ReentrancyGuard {
     }
 
     function withdrawJunior(uint256 burn, uint256 minBacking, uint256 minAsset) external nonReentrant {
+        _withdrawJunior(burn, minBacking, minAsset);
+    }
+
+    function withdrawJuniorBounded(uint256 burn, uint256 minBacking, uint256 minAsset, uint256 deadline)
+        external
+        nonReentrant
+    {
+        require(block.timestamp <= deadline, "DEADLINE");
+        _withdrawJunior(burn, minBacking, minAsset);
+    }
+
+    function _withdrawJunior(uint256 burn, uint256 minBacking, uint256 minAsset) private {
         if (reservedBacking != 0) revert ActiveExposure();
         uint256 ready = withdrawalReadyAt[msg.sender];
         if (ready == 0 || block.timestamp < ready) revert NotReady();

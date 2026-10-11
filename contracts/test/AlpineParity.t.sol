@@ -324,4 +324,17 @@ contract AlpineParityTest {
         );
         require(pool.earned(PROVIDER) == 0.02 ether, "no double reward");
     }
+
+    function testProviderDeadlinesRevertAtomically() public {
+        vm.prank(PROVIDER);
+        vm.expectRevert();
+        pool.depositJuniorBounded(10e6, 1, block.timestamp - 1);
+        vm.prank(PROVIDER);
+        pool.requestJuniorWithdrawal();
+        vm.warp(block.timestamp + 121);
+        vm.prank(PROVIDER);
+        vm.expectRevert();
+        pool.withdrawJuniorBounded(100e18, 0, 0, block.timestamp - 1);
+        require(pool.shares(PROVIDER) == 1000e18, "expired redemption unchanged");
+    }
 }

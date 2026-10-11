@@ -152,12 +152,12 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
         market.address,
         poolAbi,
         provider
-          ? "depositJunior"
+          ? "depositJuniorBounded"
           : market.asset === "native"
             ? "protect"
             : "protectToken",
         provider
-          ? [quote.amount, quote.minimum]
+          ? [quote.amount, quote.minimum, quote.deadline]
           : market.asset === "native"
             ? [quote.minimum, quote.deadline]
             : [quote.amount, quote.minimum, quote.deadline],
@@ -694,8 +694,8 @@ export function ProviderPosition({ marketKey }: { marketKey: string }) {
         "Redeem provider shares",
         m.address!,
         poolAbi,
-        "withdrawJunior",
-        [q.amount, q.minimum, q.secondaryMinimum],
+        "withdrawJuniorBounded",
+        [q.amount, q.minimum, q.secondaryMinimum, q.deadline],
       );
       setQ(null);
       setAmount("");
