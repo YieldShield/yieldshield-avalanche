@@ -32,6 +32,6 @@ The asset set is native Fuji AVAX, the explicitly named Alpine test wrapper `awA
 
 The website exposes all workflows, but Fuji contracts remain **undeployed** under the user's instruction to prepare deployment for later. Public write controls remain disabled. Local contract/lifecycle evidence is not evidence of Fuji deployment. See the build and operations records for exact tests and the future broadcast procedure.
 
-Browser acceptance covered the separate protection/provider pages, direct routes, market selection, funding return context, invalid-pool rejection, wallet-unavailable recovery, and desktop/mobile layouts. Signed native workflows are verified independently through local-chain evidence; browser-extension signing is not claimed as tested.
+Browser acceptance covered the separate protection/provider pages, direct routes, market selection, funding return context, invalid-pool rejection, wallet-unavailable recovery, and desktop/mobile layouts. The later end-to-end pass completed 44 confirmed transactions through the actual browser application with an isolated local wallet, plus 48 separately scripted local-chain transactions. [E2E_REPORT.md](E2E_REPORT.md) records lifecycle, race and recovery coverage. Actual wallet-extension approval screens remain unverified.
 
 Both grant applications remain held for user review. Existing application drafts describe the earlier release and must be reconciled with this expanded implementation before any future submission.

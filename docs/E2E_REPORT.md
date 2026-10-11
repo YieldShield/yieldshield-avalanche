@@ -34,6 +34,7 @@ Historical Activity entries marked unknown require manually checking their trans
 - Invalid market selection blocks the workflow and recovers to the market catalogue without retaining the invalid query.
 - Provider → acquisition → faucet → acquisition → provider preserves the selected backing-vault market and exact six-decimal amount. The conversion amount and original provider amount remain independent.
 - Public writes remain visibly disabled while Fuji contracts await deployment.
+- After publishing, the custom domain served the expected production bundle, four icon links and no test-wallet controls. Desktop and 390px phone views had no horizontal page overflow; screenshots and exact release identity are in [HOSTING.md](HOSTING.md).
 
 ## Recovery fixes
 
