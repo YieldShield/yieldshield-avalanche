@@ -1,77 +1,82 @@
 {
-  "runAt": "2026-10-11T17:39:40.121Z",
+  "sourceCommit": "4271c37fdf92135fe8854a87ec11f7aeca2b3e76",
+  "sourceSha256": {
+    "contracts/src/AlpinePool.sol": "0a21441076b5610baf32564574673f2623ea09cdbbf3d92d17ba0bc3ff9d6cdd",
+    "contracts/src/DemoAssets.sol": "384d4f2230499aef58a6ed99fb1791794978e9a8810f68425d40ae85a5ae1efa"
+  },
+  "runAt": "2026-10-11T17:44:01.677Z",
   "chainId": 31337,
   "network": "Anvil localhost; NOT Avalanche Fuji",
   "contracts": {
-    "backing": "0xe9b9a1f473e84f8ab748cf126c2dfd9fb9c94b5e",
-    "oracle": "0x64c4c92699c12e499d79dfd46f83f578e2ade65d",
-    "pool": "0xf1165565e260b1dc6f340d7232a40f19b7bc8544"
+    "backing": "0x8f9d5a516691167d52dc76fd29bd2d705b60a4d9",
+    "oracle": "0xb0514a448a85fbe6309802509ca0c5dbf9ff8524",
+    "pool": "0x1cc777ed868c3d1050133af2036d649708747ac7"
   },
   "transactions": [
     {
       "label": "deploy-demo-token",
-      "hash": "0xd574e0c9f72e8f0764fc3af9529a9ac17f27cfc3cfe5b18ceca78009406ac934",
-      "block": "1"
+      "hash": "0xcb814ac8ef80854778d579319d45bacfca9ffdc6ebd154b46b142bf6b37374f5",
+      "block": "17"
     },
     {
       "label": "deploy-scenario-oracle",
-      "hash": "0xcbc52c01eeaa1550e7b050421526d24e04cc8c931e1f89818bd82c540088b435",
-      "block": "2"
+      "hash": "0xe822bc492acbee2f6a791f12cd2437e8d096b708370bc0d5372b1f3136c3bfc0",
+      "block": "18"
     },
     {
       "label": "deploy-pool",
-      "hash": "0x4b43f8678bce90f57e94213e71c0e0193bb086b876163a838cf0585470203b7b",
-      "block": "3"
+      "hash": "0x3779a56b8c56786063be38e9df798a91bc309543a9fe642d11f2ad25bb01a8f1",
+      "block": "19"
     },
     {
       "label": "faucet",
-      "hash": "0xb38d306cdbbadb43494d66d0a359b913d746f4e97fd895f06713bf348a7a2918",
-      "block": "4"
+      "hash": "0xb5574b24a2e7d468101c7bc6b2cece64293d7bd0ffd89678a0af52341b224f3f",
+      "block": "20"
     },
     {
       "label": "approve-backing",
-      "hash": "0x03123ae3fdf6a9c55c8063898900f95a24931a26d632858067f3d942fbbe9618",
-      "block": "5"
+      "hash": "0xcc922020cf9053d9483626fe70c7adf2703a7032922973c85c67d9d6a2914d79",
+      "block": "21"
     },
     {
       "label": "seed-junior",
-      "hash": "0x8786c612e73afd3a52a68e01f3bf5fec6be288e11817f38413ee205beb03f506",
-      "block": "6"
+      "hash": "0xb732f7fa9804fb7f69bdc030f1988da819aa0c43925a0183f54787a5fb90e0b2",
+      "block": "22"
     },
     {
       "label": "open-protected-position",
-      "hash": "0xd660d5e04cfce47a7937f2a5ad59afb69f9b5db8f50a72c659ff4a49e8c1fb30",
-      "block": "7"
+      "hash": "0x8a2e279be6e6501a2b133f490fb001c664800d7c491199b69c0b9506edccf6d5",
+      "block": "23"
     },
     {
       "label": "backing-exit",
-      "hash": "0xfa2be89a0b4f0d67657bd7f21122c79582bda9384707e6df537811626eb54266",
-      "block": "9"
+      "hash": "0x12c62f0ad21e89fb8ad0402c99e79375eb9440e63595a9577ef30880a150df9e",
+      "block": "25"
     },
     {
       "label": "open-expiry-position",
-      "hash": "0xc3866675f98d6177a463c9c7c99cc8abf66ae1f186c92c72ec4c695108d95bad",
-      "block": "10"
+      "hash": "0x5d724d4dcb945c59dfa7acc4ec2ab0fab99ae54022f28134842b8ffed50cf9d6",
+      "block": "26"
     },
     {
       "label": "permissionless-expiry",
-      "hash": "0x4d046ef094698376ee02b42fab46e93f0ab251e72cda950b839ea95aa3c0355e",
-      "block": "12"
+      "hash": "0xa2d5c351902c1586ec2674435774c4d1654078b667f9cc9bb2435c2076c789b5",
+      "block": "28"
     },
     {
       "label": "junior-notice",
-      "hash": "0xc9ca36bcac760ee2e5ed8b459819395af1493afc17d4651c3a45acaa6c2a07da",
-      "block": "13"
+      "hash": "0xfdef6c482c36a954f210cc61bd24c496b210c2827aea2895832d62c603cccf66",
+      "block": "29"
     },
     {
       "label": "junior-basket-redemption",
-      "hash": "0xd1486d9c87b782deaadd9e5cf3dfa4cbfa4b2951f9f37ec05afdaf9dc11270d1",
-      "block": "15"
+      "hash": "0x7a07ffc7c0f36907733fbd780a592f82beeacfed7e0e8aadfb6372f9b1f11af3",
+      "block": "31"
     },
     {
       "label": "claim-expired-backing",
-      "hash": "0x0c97f32e0c61ca030c88ba2e01a499e985bbf0150232d79793bb58362106defb",
-      "block": "16"
+      "hash": "0x8bb72e62155b6f504ed5c0486ef43869b7b680ce9c88cc4e088f0b6050afda5f",
+      "block": "32"
     }
   ],
   "checks": {

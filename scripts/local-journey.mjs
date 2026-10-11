@@ -1,3 +1,5 @@
+import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { createPublicClient, createWalletClient, http, parseEther } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
@@ -191,6 +193,17 @@ const remaining = await c.readContract({
 });
 if (remaining !== 0n) throw new Error("Unexpected balance after full unwind");
 const evidence = {
+  sourceCommit: execFileSync("git", ["rev-parse", "HEAD"], {
+    encoding: "utf8",
+  }).trim(),
+  sourceSha256: Object.fromEntries(
+    ["contracts/src/AlpinePool.sol", "contracts/src/DemoAssets.sol"].map(
+      (path) => [
+        path,
+        createHash("sha256").update(readFileSync(path)).digest("hex"),
+      ],
+    ),
+  ),
   runAt: new Date().toISOString(),
   chainId: 31337,
   network: "Anvil localhost; NOT Avalanche Fuji",
