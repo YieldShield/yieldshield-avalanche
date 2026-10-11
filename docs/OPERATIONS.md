@@ -18,7 +18,7 @@ Five contracts are deployed: aDEMO, scenario oracle, reference oracle, scenario 
 
 ## Website
 
-`npm run build` produces `dist/` for static hosting. All deployment identities are public in `config/deployment.json`; no `.env` is needed for normal operation. A generated Vercel local environment file is ignored and is not part of the application. The browser checks Fuji before transactions, requests exact token approval, uses a 0.5% quote tolerance, waits for receipts, and links to the explorer. A mature epoch stops deposits and AVAX exits; fixed backing exits, expiry settlement and backing claims remain available.
+`npm run build` produces `dist/` for static hosting. All deployment identities are public in `config/deployment.json`; no `.env` is needed for normal operation. A generated Vercel local environment file is ignored and is not part of the application. The browser checks Fuji before transactions, requests exact token approval, uses a 0.5% quote tolerance (minimum outputs round upward so even tiny quotes stay within that bound), waits for receipts, and links to the explorer. A mature epoch stops deposits and AVAX exits; fixed backing exits, expiry settlement and backing claims remain available.
 
 The live market must use the verified Chainlink Fuji AVAX/USD proxy `0x5498BB86BC934c8D34FDA08E81D444153d0D06aD`, 8 decimals, a 600-second advertised heartbeat, and this pilot's conservative 1,200-second maximum age. No fallback can silently turn a failed live price into synthetic data.
 
@@ -31,8 +31,8 @@ A subsequent epoch requires a new market deployment and a deliberate frontend re
 ## Evidence and reproducibility
 
 - `forge test --root contracts`: 14 tests, including 256 fuzz runs for reserve/native accounting, plus specific junior fairness and forced-expiry regression tests.
-- `npm test`: exact-unit payoff, backing capacity and invalid-price tests.
-- `npx playwright test`: desktop/mobile navigation, responsive overflow, no-wallet behavior, undeployed-state restrictions and risk copy.
+- `npm test`: exact-unit payoff, backing capacity, invalid-price and ceiling-rounded minimum-output tests, including tiny quotes.
+- `npx playwright test`: desktop/mobile navigation, responsive overflow, no-wallet behavior, account/network change resets, undeployed-state restrictions and risk copy.
 - `node scripts/local-journey.mjs`: complete signed local lifecycle, 13 mined transactions, recipient balances and zero residual backing after unwind.
 - `docs/evidence/desktop.png` / `mobile.png`: local browser captures with RPC intentionally unavailable during failure-state tests. They do not depict public Fuji contract activity.
 

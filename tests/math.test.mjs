@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { exitPreview, maxNewFloor, WAD } from "../src/math.mjs";
+import { exitPreview, maxNewFloor, minimumOutput, WAD } from "../src/math.mjs";
 test("exits use only realized positive gains and precise units", () => {
   assert.deepEqual(exitPreview(WAD, 25_000000n, 50_000000n), {
     avaxOut: 940000000000000000n,
@@ -15,4 +15,27 @@ test("entry capacity is conservative under rounding", () => {
 });
 test("invalid price cannot silently become a live quote", () => {
   assert.throws(() => exitPreview(WAD, 25_000000n, 0n));
+});
+
+test("tiny quotes cannot lose more than the stated half percent", () => {
+  assert.equal(minimumOutput(2n), 2n);
+  assert.equal(minimumOutput(199n), 199n);
+  assert.equal(minimumOutput(200n), 199n);
+  assert.equal(minimumOutput(201n), 200n);
+  for (let quote = 1n; quote <= 1000n; quote++) {
+    const min = minimumOutput(quote);
+    assert.ok(
+      (quote - min) * 1000n <= quote * 5n,
+      "accepted minimum exceeds tolerance",
+    );
+    assert.ok(
+      (quote - (min - 1n)) * 1000n > quote * 5n,
+      "minimum must be the least safe unit",
+    );
+    assert.ok(min <= quote, "quote remains executable");
+  }
+});
+test("zero-valued basket legs remain redeemable without allowing negative quotes", () => {
+  assert.equal(minimumOutput(0n), 0n);
+  assert.throws(() => minimumOutput(-1n));
 });

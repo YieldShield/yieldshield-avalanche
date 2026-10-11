@@ -17,6 +17,11 @@ export function maxNewFloor(backing, reserved) {
   const maximum = (backing * 10000n) / 15000n;
   return maximum > reserved ? maximum - reserved : 0n;
 }
+/** Ceil the minimum so sub-unit rounding never exceeds the advertised 0.5% loss. */
+export function minimumOutput(quote) {
+  if (quote < 0n) throw new Error("Invalid output quote");
+  return (quote * 995n + 999n) / 1000n;
+}
 export function safeError(error) {
   const message =
     error?.shortMessage ||

@@ -18,7 +18,7 @@ import {
   short,
   explorer,
 } from "./chain";
-import { exitPreview, maxNewFloor, safeError } from "./math.mjs";
+import { exitPreview, maxNewFloor, minimumOutput, safeError } from "./math.mjs";
 import "./style.css";
 
 type Position = {
@@ -341,7 +341,12 @@ function App() {
           abi: oracleAbi,
           functionName: "price",
         });
-        const minFloor = (((value * fresh) / 10n ** 18n) * 995n) / 1000n;
+        const entryQuote = (value * fresh) / 10n ** 18n;
+        if (entryQuote === 0n)
+          throw new Error(
+            "Amount is too small to reserve one aDEMO base unit.",
+          );
+        const minFloor = minimumOutput(entryQuote);
         const request = await client.simulateContract({
           account: active,
           address,
@@ -410,7 +415,7 @@ function App() {
           address,
           abi: poolAbi,
           functionName: "depositJunior",
-          args: [value, (expected * 995n) / 1000n],
+          args: [value, minimumOutput(expected)],
         });
         hash = await w.writeContract(request.request);
       } else if (kind === "settle" && position)
@@ -438,10 +443,10 @@ function App() {
       else if (kind === "withdraw") {
         const burn = pool.ownShares;
         const minBacking = pool.totalShares
-          ? (((pool.backing * burn) / pool.totalShares) * 995n) / 1000n
+          ? minimumOutput((pool.backing * burn) / pool.totalShares)
           : 0n;
         const minAvax = pool.totalShares
-          ? (((pool.juniorNative * burn) / pool.totalShares) * 995n) / 1000n
+          ? minimumOutput((pool.juniorNative * burn) / pool.totalShares)
           : 0n;
         const request = await client.simulateContract({
           account: active,
@@ -471,7 +476,7 @@ function App() {
           address,
           abi: poolAbi,
           functionName: "exitAvax",
-          args: [position.id, (quote.avaxOut * 995n) / 1000n],
+          args: [position.id, minimumOutput(quote.avaxOut)],
         });
       } else throw new Error("Choose a valid action.");
       setTx(hash);
