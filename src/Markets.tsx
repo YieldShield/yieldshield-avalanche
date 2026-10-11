@@ -84,7 +84,7 @@ export function Markets({ home = false }: { home?: boolean }) {
 }
 export function PoolDetail() {
   const { key } = useParams();
-  const { markets, snapshots, errors } = useAlpine();
+  const { markets, snapshots, errors, ready } = useAlpine();
   const market = markets.find(
     (m) => m.key.toLowerCase() === key?.toLowerCase(),
   );
@@ -108,29 +108,58 @@ export function PoolDetail() {
         <MarketCard market={market} headingLevel={2} />
         <article className="action-card">
           <h2>Know the terms</h2>
+          {!s && !ready && !market.address && (
+            <p className="muted-text">
+              Prepared default terms. Verify the deployed pool before signing.
+            </p>
+          )}
+          {!s && (ready || market.address) && (
+            <p className="error-note" role="alert">
+              Market terms could not be read. Refresh Network status before
+              continuing.
+            </p>
+          )}
           <Facts
             items={[
               [
                 "Collateral requirement",
-                `${(s?.terms.collateralBps || 15000) / 100}%`,
+                s
+                  ? `${s.terms.collateralBps / 100}%`
+                  : ready || market.address
+                    ? "Unavailable"
+                    : "150% · prepared",
               ],
               [
                 "Gain fees: providers / creator / protocol",
-                `${(s?.terms.juniorFeeBps ?? 1000) / 100}% / ${(s?.terms.creatorFeeBps ?? 100) / 100}% / 1%`,
+                s
+                  ? `${s.terms.juniorFeeBps / 100}% / ${s.terms.creatorFeeBps / 100}% / 1%`
+                  : ready || market.address
+                    ? "Unavailable"
+                    : "10% / 1% / 1% · prepared",
               ],
               [
                 "Earliest holder exit",
-                `${s?.terms.exitDelay || 60} seconds after entry`,
+                s
+                  ? `${s.terms.exitDelay} seconds after entry`
+                  : ready || market.address
+                    ? "Unavailable"
+                    : "60 seconds after entry · prepared",
               ],
               [
                 "Provider notice",
-                `${s?.terms.juniorNotice || 120} seconds + exposure clearance`,
+                s
+                  ? `${s.terms.juniorNotice} seconds + exposure clearance`
+                  : ready || market.address
+                    ? "Unavailable"
+                    : "120 seconds + exposure clearance · prepared",
               ],
               [
                 "Maturity",
                 s
                   ? new Date(Number(s.maturity) * 1000).toLocaleString("en-US")
-                  : "Set at deployment",
+                  : ready || market.address
+                    ? "Unavailable"
+                    : "Set at deployment",
               ],
               [
                 "Remaining backing",

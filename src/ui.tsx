@@ -1,6 +1,6 @@
 import { type ReactNode, useId } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { assets, fmt, type Market } from "./chain";
+import { assets, config, fmt, type Market } from "./chain";
 import { useAlpine } from "./state";
 export function useMarket() {
   const a = useAlpine();
@@ -94,9 +94,9 @@ export function Notice() {
   const { ready } = useAlpine();
   return !ready ? (
     <div className="notice">
-      Fuji contracts are awaiting deployment. Explore all workflows here; wallet
-      actions become available after verified deployment. No deposits have been
-      collected.
+      {config.factory
+        ? "Contract configuration is awaiting verification. Wallet actions remain unavailable; check Network status for details."
+        : "Fuji contracts are awaiting deployment. Explore all workflows here; wallet actions become available after verified deployment. No deposits have been collected."}
     </div>
   ) : null;
 }
@@ -119,7 +119,9 @@ export function ActionButton({
       {busy
         ? "Waiting for wallet or confirmation…"
         : !ready
-          ? "Awaiting Fuji deployment"
+          ? config.factory
+            ? "Awaiting verification"
+            : "Awaiting Fuji deployment"
           : !account
             ? "Connect wallet"
             : children}
@@ -212,7 +214,7 @@ export function MarketCard({
   headingLevel?: 2 | 3;
 }) {
   const Heading = headingLevel === 2 ? "h2" : "h3";
-  const { snapshots } = useAlpine();
+  const { snapshots, ready, loading, errors } = useAlpine();
   const s = snapshots[market.key],
     asset = assets.find((a) => a.key === market.asset)!;
   return (
@@ -226,7 +228,15 @@ export function MarketCard({
             {market.backingSymbol === "bvaDEMO" ? "v" : "a"}
           </span>
         </div>
-        <span className="test-pill">{s ? "TESTNET" : "PREPARED"}</span>
+        <span className="test-pill">
+          {s
+            ? "TESTNET"
+            : errors[market.key]
+              ? "READ FAILED"
+              : market.address
+                ? "READ PENDING"
+                : "PREPARED"}
+        </span>
       </div>
       <Heading>{market.name}</Heading>
       <p className="card-description">
@@ -243,7 +253,11 @@ export function MarketCard({
             "Available entry claims",
             s
               ? `${fmt(s.capacity)} ${market.backingSymbol}`
-              : "Awaiting deployment",
+              : ready || market.address
+                ? loading
+                  ? "Loading…"
+                  : "Unavailable"
+                : "Awaiting deployment",
           ],
           [
             "Provider entry",
@@ -251,7 +265,9 @@ export function MarketCard({
               ? s.reserved > 0n
                 ? "Frozen · open protection"
                 : "Available until maturity"
-              : "Prepared",
+              : ready || market.address
+                ? "Unavailable"
+                : "Prepared",
           ],
         ]}
       />

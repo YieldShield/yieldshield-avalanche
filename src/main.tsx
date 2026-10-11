@@ -8,7 +8,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import { AlpineProvider, useAlpine } from "./state";
-import { config, localMode, short } from "./chain";
+import { localMode, short } from "./chain";
 import { RoleFlow, Positions, PositionDetail } from "./Workflows";
 import { Markets, PoolDetail } from "./Markets";
 import { RouteLink, Notice, Empty } from "./ui";
@@ -124,10 +124,7 @@ function App() {
         <div className="content">
           <div className="testnet-note">
             <span>{localMode ? "LOCAL DEMO" : "TESTNET ONLY"}</span>All funds
-            are valueless test assets.{" "}
-            {config.status === "awaiting-testnet-gas"
-              ? "Contracts prepared; Fuji deployment is pending."
-              : "Review the network and market terms before signing."}
+            are valueless test assets. Review the market terms before signing.
           </div>
           <Notice />
           {message && (

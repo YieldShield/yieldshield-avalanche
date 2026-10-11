@@ -262,7 +262,13 @@ export function Status() {
       />
       <div className="market-grid">
         <article className="market-card">
-          <h2>{ready ? "Contracts configured" : "Fuji deployment pending"}</h2>
+          <h2>
+            {ready
+              ? "Contracts configured"
+              : config.factory
+                ? "Verification pending"
+                : "Fuji deployment pending"}
+          </h2>
           <Facts
             items={[
               [
@@ -272,8 +278,12 @@ export function Status() {
               ["Chain ID", String(config.chainId)],
               ["Manifest state", config.status],
               [
-                "Last refresh",
-                loading ? "Loading…" : "See individual market results",
+                "Read status",
+                !ready
+                  ? "Available after verified deployment"
+                  : loading
+                    ? "Loading…"
+                    : "See individual market results",
               ],
               [
                 "Deployment evidence",
@@ -281,8 +291,12 @@ export function Status() {
               ],
             ]}
           />
-          <button className="secondary-button" onClick={() => void refresh()}>
-            Refresh network reads
+          <button
+            className="secondary-button"
+            disabled={!ready || loading}
+            onClick={() => void refresh()}
+          >
+            {loading ? "Refreshing…" : "Refresh network reads"}
           </button>
           <p className="card-description">
             Local lifecycle tests are separate from a Fuji deployment. A
@@ -329,7 +343,11 @@ export function Status() {
                     ? "Read failed"
                     : snapshots[m.key]
                       ? "Contract read succeeded"
-                      : "Awaiting deployment",
+                      : ready || m.address
+                        ? loading
+                          ? "Loading…"
+                          : "Unavailable"
+                        : "Awaiting deployment",
                 ],
                 [
                   "Oracle",
