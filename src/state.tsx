@@ -24,6 +24,7 @@ import {
   type Market,
 } from "./chain";
 import { safeError } from "./math.mjs";
+import { createLatestRead } from "./lifecycle.mjs";
 export type Position = {
   id: bigint;
   owner: Address;
@@ -109,6 +110,7 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
     [errors, setErrors] = useState<Record<string, string>>({}),
     [loading, setLoading] = useState(false),
     [activity, setActivity] = useState<Activity[]>(stored);
+  const latestRead = useRef(createLatestRead());
   const generation = useRef(0),
     currentAccount = useRef<Address | null>(null);
   const ready = Boolean(
@@ -149,6 +151,7 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
   }, []);
   const refresh = useCallback(async () => {
     if (!ready) return;
+    const isLatestRead = latestRead.current.begin();
     const generationAtStart = generation.current,
       owner = currentAccount.current;
     setLoading(true);
@@ -315,7 +318,7 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
         }),
       );
     }
-    if (generationAtStart === generation.current) {
+    if (generationAtStart === generation.current && isLatestRead()) {
       setMarkets(catalog);
       setSnapshots(data);
       setBalances(funds);
