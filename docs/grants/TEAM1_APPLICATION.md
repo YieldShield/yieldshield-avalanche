@@ -28,7 +28,7 @@ The Alpine version is a reduced independent implementation informed by YieldShie
 
 ## Existing work and traction
 
-Current stage: prototype. The dedicated interface is live at https://avalanche.yieldshield.ai. Validation includes 14 contract tests with 256 fuzz cases, three exact-unit arithmetic tests, two desktop/mobile browser tests, and a signed 13-transaction local lifecycle. The local network is explicitly identified as chain 31337, not Fuji. See [local evidence](../evidence/local-journey.json). The user chose to prepare Fuji deployment for later; market writes remain disabled until deployment verification. Live Chainlink reference reads do not imply deployed protection pools.
+Current stage: prototype. The dedicated interface is live at https://avalanche.yieldshield.ai. Validation includes 14 contract tests with 256 fuzz cases, five exact-unit arithmetic tests, three browser tests, and a signed 13-transaction local lifecycle. The local network is explicitly identified as chain 31337, not Fuji. See [local evidence](../evidence/local-journey.json). The user chose to prepare Fuji deployment for later; market writes remain disabled until deployment verification. Live Chainlink reference reads do not imply deployed protection pools.
 
 No verified external-user, revenue, real TVL or organic-volume figures are claimed. Test scenarios and internal transactions are engineering evidence. The team is self-funded and has received no investment or grants, as confirmed on 11 October 2026. Related grant applications and chain experiments exist, but no same deliverable will be billed twice. Today's prototype is prior work, not part of the requested reimbursement.
 
