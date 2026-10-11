@@ -1,6 +1,6 @@
 import { useReviewGuard } from "./review";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { decodeEventLog, formatUnits, isAddress, type Address } from "viem";
 import {
   assets,
@@ -59,6 +59,7 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
     approve,
     transact,
     setMessage,
+    ready,
   } = useMarket();
   const [amount, setAmount] = useState(params.get("amount") || ""),
     [quote, setQuote] = useState<Quote | null>(null),
@@ -321,18 +322,33 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
                 "Available entry claims",
                 s
                   ? `${fmt(s.capacity)} ${market.backingSymbol}`
-                  : "Awaiting deployment",
+                  : ready
+                    ? "Unavailable"
+                    : "Awaiting deployment",
               ],
-              ["Collateral", (s?.terms.collateralBps || 15000) / 100 + "%"],
+              [
+                "Collateral",
+                s
+                  ? s.terms.collateralBps / 100 + "%"
+                  : ready
+                    ? "Unavailable"
+                    : "Prepared default: 150%",
+              ],
               [
                 "Gain fees to providers",
-                (s?.terms.juniorFeeBps ?? 1000) / 100 + "%",
+                s
+                  ? s.terms.juniorFeeBps / 100 + "%"
+                  : ready
+                    ? "Unavailable"
+                    : "Prepared default: 10%",
               ],
               [
                 "Maturity",
                 s
                   ? new Date(Number(s.maturity) * 1000).toLocaleString("en-US")
-                  : "Set at market creation",
+                  : ready
+                    ? "Unavailable"
+                    : "Set at market creation",
               ],
             ]}
           />
@@ -429,8 +445,10 @@ export function Positions() {
 }
 export function PositionDetail() {
   const { key = "" } = useParams();
+  const [routeParams] = useSearchParams();
   const split = key.lastIndexOf(":");
-  const marketKey = split < 0 ? "reference" : key.slice(0, split),
+  const marketKey =
+      split < 0 ? routeParams.get("pool") || "reference" : key.slice(0, split),
     id = key.slice(split + 1);
   const { markets, snapshots, account, identity, transact } = useAlpine();
   const m = markets.find(
