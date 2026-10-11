@@ -1,3 +1,5 @@
+![YieldShield Alpine — AVAX exposure. Explicit first-loss backing.](.github/assets/banner.png)
+
 # YieldShield Alpine
 
 A distinct Avalanche implementation of YieldShield's split-risk markets: protected holders, capital providers, funded test trading, vault conversions and independently created pools.
