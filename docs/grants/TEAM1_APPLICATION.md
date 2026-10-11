@@ -1,5 +1,7 @@
 # YieldShield Alpine Team1 Mini Grant application draft
 
+**Submission on hold for user review — 11 October 2026.** David instructed: “Hold both for my review.” Do not submit this application or accept submission terms until David explicitly approves. The filled answers below remain drafts.
+
 Prepared 11 October 2026 for Hawig Ventures UG (haftungsbeschränkt). Proposed request: $10,000 for six weeks of additional Avalanche-specific work. The authenticated Team1 form has been filled and has not been submitted. Exact entered grant answers are preserved in [TEAM1_FORM_VALUES.json](TEAM1_FORM_VALUES.json). A new YieldShield Alpine project profile was created in Builder Hub, with David as the confirmed account member and both cofounders described in the grant narrative. No invitation was sent to Santiago.
 
 ## Project and team
