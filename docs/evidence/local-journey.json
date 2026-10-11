@@ -1,0 +1,87 @@
+{
+  "runAt": "2026-10-11T17:39:40.121Z",
+  "chainId": 31337,
+  "network": "Anvil localhost; NOT Avalanche Fuji",
+  "contracts": {
+    "backing": "0xe9b9a1f473e84f8ab748cf126c2dfd9fb9c94b5e",
+    "oracle": "0x64c4c92699c12e499d79dfd46f83f578e2ade65d",
+    "pool": "0xf1165565e260b1dc6f340d7232a40f19b7bc8544"
+  },
+  "transactions": [
+    {
+      "label": "deploy-demo-token",
+      "hash": "0xd574e0c9f72e8f0764fc3af9529a9ac17f27cfc3cfe5b18ceca78009406ac934",
+      "block": "1"
+    },
+    {
+      "label": "deploy-scenario-oracle",
+      "hash": "0xcbc52c01eeaa1550e7b050421526d24e04cc8c931e1f89818bd82c540088b435",
+      "block": "2"
+    },
+    {
+      "label": "deploy-pool",
+      "hash": "0x4b43f8678bce90f57e94213e71c0e0193bb086b876163a838cf0585470203b7b",
+      "block": "3"
+    },
+    {
+      "label": "faucet",
+      "hash": "0xb38d306cdbbadb43494d66d0a359b913d746f4e97fd895f06713bf348a7a2918",
+      "block": "4"
+    },
+    {
+      "label": "approve-backing",
+      "hash": "0x03123ae3fdf6a9c55c8063898900f95a24931a26d632858067f3d942fbbe9618",
+      "block": "5"
+    },
+    {
+      "label": "seed-junior",
+      "hash": "0x8786c612e73afd3a52a68e01f3bf5fec6be288e11817f38413ee205beb03f506",
+      "block": "6"
+    },
+    {
+      "label": "open-protected-position",
+      "hash": "0xd660d5e04cfce47a7937f2a5ad59afb69f9b5db8f50a72c659ff4a49e8c1fb30",
+      "block": "7"
+    },
+    {
+      "label": "backing-exit",
+      "hash": "0xfa2be89a0b4f0d67657bd7f21122c79582bda9384707e6df537811626eb54266",
+      "block": "9"
+    },
+    {
+      "label": "open-expiry-position",
+      "hash": "0xc3866675f98d6177a463c9c7c99cc8abf66ae1f186c92c72ec4c695108d95bad",
+      "block": "10"
+    },
+    {
+      "label": "permissionless-expiry",
+      "hash": "0x4d046ef094698376ee02b42fab46e93f0ab251e72cda950b839ea95aa3c0355e",
+      "block": "12"
+    },
+    {
+      "label": "junior-notice",
+      "hash": "0xc9ca36bcac760ee2e5ed8b459819395af1493afc17d4651c3a45acaa6c2a07da",
+      "block": "13"
+    },
+    {
+      "label": "junior-basket-redemption",
+      "hash": "0xd1486d9c87b782deaadd9e5cf3dfa4cbfa4b2951f9f37ec05afdaf9dc11270d1",
+      "block": "15"
+    },
+    {
+      "label": "claim-expired-backing",
+      "hash": "0x0c97f32e0c61ca030c88ba2e01a499e985bbf0150232d79793bb58362106defb",
+      "block": "16"
+    }
+  ],
+  "checks": {
+    "initialBackingExit": "25000000",
+    "expiredBackingClaim": "25000000",
+    "finalOwnerBacking": "50000000",
+    "poolBackingAfterFullUnwind": "0"
+  },
+  "limitations": [
+    "Internal local transaction evidence only",
+    "No external users or public Fuji deployment proven"
+  ]
+}
