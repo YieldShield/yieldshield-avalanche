@@ -10,13 +10,13 @@ A $10k grant should fund a focused six-week pilot and evidence, not a new L1 or 
 
 ## Token decisions
 
-| Asset | Identity and role | Status |
-| --- | --- | --- |
-| Fuji AVAX | Native gas and protected exposure, chain 43113 | Pilot asset, no monetary value |
-| Alpine Demo Dollar (aDEMO) | Newly deployed 6-decimal faucet token | Pilot backing; not Circle USDC, not USD redeemable |
-| Circle Fuji USDC | `0x5425890298aed601595a70AB815c96711a31Bc65` | Exact official test token; separate reference identity, not substituted by demo token |
-| Native Avalanche USDC | `0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E`, chain 43114 | Production research only, not activated |
-| BENQI sAVAX | `0x2b2C81e08f1Af8835a78Bb2A90AE924ACE0eA4bE`, chain 43114 | Future research; requires redemption-rate, liquidity and exit-delay analysis |
+| Asset                      | Identity and role                                         | Status                                                                                |
+| -------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Fuji AVAX                  | Native gas and protected exposure, chain 43113            | Pilot asset, no monetary value                                                        |
+| Alpine Demo Dollar (aDEMO) | Newly deployed 6-decimal faucet token                     | Pilot backing; not Circle USDC, not USD redeemable                                    |
+| Circle Fuji USDC           | `0x5425890298aed601595a70AB815c96711a31Bc65`              | Exact official test token; separate reference identity, not substituted by demo token |
+| Native Avalanche USDC      | `0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E`, chain 43114 | Production research only, not activated                                               |
+| BENQI sAVAX                | `0x2b2C81e08f1Af8835a78Bb2A90AE924ACE0eA4bE`, chain 43114 | Future research; requires redemption-rate, liquidity and exit-delay analysis          |
 
 No YieldShield governance token or incentives are needed for this grant. Avoid a new token's liquidity and tokenomics dependencies. A future native-USDC pilot needs issuer/blacklist risk assessment and independent security review; sAVAX must never be valued as one AVAX or treated as instantly redeemable. Native AVAX avoids a custom wrapper masquerading as canonical WAVAX in the first pilot.
 

@@ -1,1 +1,16 @@
-{"chainId":43113,"status":"awaiting-testnet-gas","rpcUrl":"https://api.avax-test.network/ext/bc/C/rpc","explorer":"https://testnet.snowtrace.io","deployer":"0x59EFc921242ef1a8140b723aa3277f168eaed2EC","backingToken":null,"scenarioOracle":null,"referenceOracle":null,"scenarioPool":null,"referencePool":null,"chainlinkFeed":"0x5498BB86BC934c8D34FDA08E81D444153d0D06aD","circleFujiUsdc":"0x5425890298aed601595a70AB815c96711a31Bc65","maxPriceAge":1200,"transactions":[]}
+{
+  "chainId": 43113,
+  "status": "awaiting-testnet-gas",
+  "rpcUrl": "https://api.avax-test.network/ext/bc/C/rpc",
+  "explorer": "https://testnet.snowtrace.io",
+  "deployer": "0x59EFc921242ef1a8140b723aa3277f168eaed2EC",
+  "backingToken": null,
+  "scenarioOracle": null,
+  "referenceOracle": null,
+  "scenarioPool": null,
+  "referencePool": null,
+  "chainlinkFeed": "0x5498BB86BC934c8D34FDA08E81D444153d0D06aD",
+  "circleFujiUsdc": "0x5425890298aed601595a70AB815c96711a31Bc65",
+  "maxPriceAge": 1200,
+  "transactions": []
+}
