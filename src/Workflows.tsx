@@ -50,6 +50,7 @@ async function valid(q: Quote) {
   })) as string[];
   if (accounts[0]?.toLowerCase() !== q.account.toLowerCase())
     throw new Error("Wallet changed. Review again.");
+  q.assertCurrent();
 }
 export function RoleFlow({ role }: { role: "protect" | "provide" }) {
   const {
@@ -181,6 +182,7 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
             ? [quote.minimum, quote.deadline]
             : [quote.amount, quote.minimum, quote.deadline],
         !provider && market.asset === "native" ? quote.amount : undefined,
+        quote.assertCurrent,
       );
       let path = `/positions?pool=${market.key}`;
       if (!provider) {
@@ -564,6 +566,8 @@ export function PositionDetail() {
         mode === "transfer"
           ? [p.id, recipient]
           : [p.id, q.amount, q.minimum, q.deadline],
+        undefined,
+        q.assertCurrent,
       );
       setQ(null);
       setAmount("");
@@ -773,6 +777,8 @@ export function ProviderPosition({ marketKey }: { marketKey: string }) {
         poolAbi,
         "withdrawJuniorBounded",
         [q.amount, q.minimum, q.secondaryMinimum, q.deadline],
+        undefined,
+        q.assertCurrent,
       );
       setQ(null);
       setAmount("");

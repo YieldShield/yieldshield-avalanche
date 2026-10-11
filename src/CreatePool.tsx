@@ -109,6 +109,8 @@ export function CreatePool() {
         factoryAbi,
         "createPoolWithBacking",
         [chosen.address, oracle, collateral, terms, review.deadline],
+        undefined,
+        review.assertCurrent,
       );
       for (const log of receipt.logs) {
         try {

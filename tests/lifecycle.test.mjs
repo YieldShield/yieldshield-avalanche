@@ -81,3 +81,24 @@ test("submitted but unknown transactions cannot replay the same reviewed intent"
   await assert.rejects(confirm(), /already submitted/);
   assert.equal(broadcasts, 1);
 });
+
+test("route change during final timestamp or simulation preflight stops the write", async () => {
+  for (const boundary of ["timestamp", "simulation"]) {
+    const scope = createReviewScope();
+    scope.update("holder:1");
+    const assertReview = scope.capture();
+    const rpc = deferred();
+    let writes = 0;
+    const submit = async () => {
+      consumeReview(assertReview);
+      await rpc.promise;
+      assertReview();
+      writes++;
+    };
+    const pending = submit();
+    scope.dispose();
+    rpc.resolve({ boundary });
+    await assert.rejects(pending, /left this workflow/);
+    assert.equal(writes, 0, boundary);
+  }
+});

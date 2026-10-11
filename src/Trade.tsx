@@ -166,6 +166,7 @@ export function Trade() {
             ? [q.bound, q.deadline]
             : [asset.address, q.amount, q.bound, q.deadline],
         side === "sell" && assetKey === "native" ? q.amount : undefined,
+        q.assertCurrent,
       );
       setSuccess(
         side === "buy"
@@ -505,6 +506,7 @@ export function Conversions() {
             ? [q.amount, account, q.bound, q.deadline]
             : [q.amount, account, account, q.bound, q.deadline],
         kind === "wrap" ? q.amount : undefined,
+        q.assertCurrent,
       );
       setSuccess(
         `${fmt(q.amount, inDecimals, 8)} ${inSymbol} converted. Your wallet balance has refreshed.`,

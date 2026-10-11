@@ -83,6 +83,7 @@ export const useAlpine = () =>
       functionName: string,
       args?: readonly unknown[],
       value?: bigint,
+      assertReview?: () => void,
     ) => Promise<any>;
     approve: (
       token: Address,
@@ -373,6 +374,7 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
     functionName: string,
     args: readonly unknown[] = [],
     value?: bigint,
+    assertReview?: () => void,
   ) {
     if (!ready) throw new Error("Fuji contracts are awaiting deployment.");
     if (!currentAccount.current) throw new Error("Connect your wallet first.");
@@ -398,6 +400,16 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
         chain,
       };
       const simulation = await client.simulateContract(request);
+      const [signingAccount] = await w.getAddresses();
+      const signingChain = await w.getChainId();
+      if (
+        signingAccount?.toLowerCase() !== expected.toLowerCase() ||
+        signingChain !== chain.id ||
+        currentAccount.current !== expected ||
+        generation.current !== expectedGeneration
+      )
+        throw new Error("Wallet changed before signing. Review again.");
+      assertReview?.();
       hash = await w.writeContract(simulation.request as any);
       setActivity((old) => [
         {
