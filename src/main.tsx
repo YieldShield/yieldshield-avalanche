@@ -9,6 +9,7 @@ import {
 } from "react-router-dom";
 import { AlpineProvider, useAlpine } from "./state";
 import { config, localMode, short } from "./chain";
+import { RoleFlow, Positions, PositionDetail } from "./Workflows";
 import { Markets, PoolDetail } from "./Markets";
 import { RouteLink, Notice, Empty } from "./ui";
 import "./style.css";
@@ -99,6 +100,10 @@ function App() {
             <Route path="/" element={<Markets home />} />
             <Route path="/markets" element={<Markets />} />
             <Route path="/pools/:key" element={<PoolDetail />} />
+            <Route path="/protect" element={<RoleFlow role="protect" />} />
+            <Route path="/provide" element={<RoleFlow role="provide" />} />
+            <Route path="/positions" element={<Positions />} />
+            <Route path="/positions/:key" element={<PositionDetail />} />
             <Route
               path="*"
               element={
