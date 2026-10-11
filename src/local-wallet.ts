@@ -1,3 +1,4 @@
+import { setLocalWallet } from "./chain";
 /** Disposable local verification wallet. This module is excluded from production builds. */
 export async function installLocalWallet() {
   const rpc = "http://127.0.0.1:8547";
@@ -46,7 +47,7 @@ export async function installLocalWallet() {
     "eth_maxPriorityFeePerGas",
     "eth_sendTransaction",
   ]);
-  window.ethereum = {
+  setLocalWallet({
     async request({
       method,
       params = [],
@@ -90,7 +91,7 @@ export async function installLocalWallet() {
     removeListener(event: string, callback: (...args: unknown[]) => void) {
       listeners.get(event)?.delete(callback);
     },
-  } as typeof window.ethereum;
+  } as Window["ethereum"]);
   const panel = document.createElement("details");
   panel.style.cssText =
     "position:fixed;bottom:8px;right:8px;z-index:1000;background:#fff9da;border:2px solid #6b4b00;padding:10px;font:12px system-ui;max-width:calc(100vw - 40px);color:#342800";

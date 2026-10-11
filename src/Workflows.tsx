@@ -14,6 +14,7 @@ import {
   DEFAULT_TERMS,
   explorer,
   short,
+  walletProvider,
 } from "./chain";
 import { useAlpine, type Snapshot, type Position } from "./state";
 import {
@@ -43,7 +44,7 @@ const deadline = () => BigInt(Math.floor(Date.now() / 1000) + 600);
 async function valid(q: Quote) {
   if (q.deadline < BigInt(Math.floor(Date.now() / 1000)))
     throw new Error("Review expired. Get a fresh quote.");
-  const accounts = (await window.ethereum!.request({
+  const accounts = (await walletProvider()!.request({
     method: "eth_accounts",
   })) as string[];
   if (accounts[0]?.toLowerCase() !== q.account.toLowerCase())

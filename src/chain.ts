@@ -173,12 +173,30 @@ declare global {
     };
   }
 }
+let localWallet: Window["ethereum"];
+export function setLocalWallet(provider: Window["ethereum"]) {
+  if (
+    !import.meta.env.DEV ||
+    !localMode ||
+    import.meta.env.VITE_LOCAL_WALLET !== "true"
+  )
+    throw new Error("Local wallet disabled");
+  localWallet = provider;
+}
+export function walletProvider() {
+  return import.meta.env.DEV &&
+    localMode &&
+    import.meta.env.VITE_LOCAL_WALLET === "true"
+    ? localWallet
+    : window.ethereum;
+}
 export async function wallet() {
-  if (!window.ethereum)
+  const provider = walletProvider();
+  if (!provider)
     throw new Error(
       "Install Core or an Ethereum-compatible wallet to connect.",
     );
-  const w = createWalletClient({ chain, transport: custom(window.ethereum) });
+  const w = createWalletClient({ chain, transport: custom(provider) });
   const [account] = await w.requestAddresses();
   try {
     await w.switchChain({ id: chain.id });

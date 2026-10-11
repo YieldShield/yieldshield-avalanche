@@ -14,6 +14,7 @@ import {
   chain,
   read,
   wallet,
+  walletProvider,
   poolAbi,
   tokenAbi,
   factoryAbi,
@@ -130,7 +131,7 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
     }
   }, [activity]);
   useEffect(() => {
-    const provider = window.ethereum;
+    const provider = walletProvider();
     const reset = () => {
       generation.current++;
       currentAccount.current = null;
