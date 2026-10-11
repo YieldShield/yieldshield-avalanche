@@ -1,17 +1,12 @@
-import React, { lazy, Suspense, useState, useEffect } from "react";
+import React, { lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  NavLink,
-  useLocation,
-} from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AlpineProvider, useAlpine } from "./state";
 import { localMode, short } from "./chain";
 import { RoleFlow, Positions, PositionDetail } from "./Workflows";
 import { Markets, PoolDetail } from "./Markets";
 import { RouteLink, Notice, Empty } from "./ui";
+import { Navigation, PortfolioNavigation } from "./SiteNavigation";
 import "./style.css";
 const Trade = lazy(() => import("./Trade").then((m) => ({ default: m.Trade })));
 const CreatePool = lazy(() =>
@@ -24,8 +19,6 @@ function App() {
   const { account, connect, message, setMessage, markets, loading } =
     useAlpine();
   const location = useLocation();
-  const [menuOpen, setMenuOpen] = useState(false);
-  useEffect(() => setMenuOpen(false), [location.pathname]);
   const selected = new URLSearchParams(location.search).get("pool");
   const invalidPool =
     selected &&
@@ -40,71 +33,13 @@ function App() {
       : null;
   const mismatchedPool =
     pathPool && selected && pathPool.toLowerCase() !== selected.toLowerCase();
-  const nav = [
-    ["/markets", "Markets", "◇"],
-    ["/protect", "Protect", "↗"],
-    ["/provide", "Provide capital", "◈"],
-    ["/trade", "Trade & convert", "⇄"],
-    ["/positions", "My positions", "▱"],
-    ["/portfolio", "Portfolio", "◷"],
-    ["/activity", "Activity", "≋"],
-    ["/create-pool", "Create a pool", "+"],
-    ["/faucet", "Get test tokens", "↓"],
-    ["/how-it-works", "Field guide", "⌁"],
-    ["/status", "Network status", "•"],
-  ];
   return (
     <div className="app-shell">
       <RouteOrientation />
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
-      <aside className="sidebar">
-        <div className="brand-row">
-          <RouteLink to="/" className="brand">
-            <img src="/mark.svg" alt="" width="38" height="38" />
-            <span>
-              YieldShield<small>ALPINE / AVALANCHE</small>
-            </span>
-          </RouteLink>
-          <button
-            type="button"
-            className="menu-toggle"
-            aria-expanded={menuOpen}
-            aria-controls="primary-navigation"
-            onClick={() => setMenuOpen((v) => !v)}
-          >
-            {menuOpen ? "Close menu" : "Menu"}
-            <span aria-hidden="true">{menuOpen ? "−" : "+"}</span>
-          </button>
-        </div>
-        <div className="nav-caption">YOUR EXPEDITION</div>
-        <nav
-          id="primary-navigation"
-          aria-label="Main navigation"
-          data-expanded={menuOpen}
-        >
-          {nav.map(([to, label, icon]) => (
-            <NavLink
-              key={to}
-              to={
-                selected
-                  ? `${to}?${new URLSearchParams({ pool: selected })}`
-                  : to
-              }
-              className={({ isActive }) => (isActive ? "selected" : "")}
-            >
-              <span aria-hidden>{icon}</span>
-              {label}
-            </NavLink>
-          ))}
-        </nav>
-        <div className="sidebar-bottom">
-          <p>Built for Avalanche.</p>
-          <small>A valueless testnet experiment.</small>
-          <RouteLink to="/legal">Terms & risks ↗</RouteLink>
-        </div>
-      </aside>
+      <Navigation />
       <main id="main-content" tabIndex={-1}>
         <header>
           <div className="breadcrumb">
@@ -127,6 +62,7 @@ function App() {
             are valueless test assets. Review the market terms before signing.
           </div>
           <Notice />
+          <PortfolioNavigation />
           {message && (
             <div className="feedback" role="status">
               {message}

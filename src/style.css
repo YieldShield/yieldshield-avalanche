@@ -1775,9 +1775,6 @@ h3 {
     text-align: center;
     line-height: 1.4;
   }
-  .sidebar nav[data-expanded="false"] a:nth-child(n + 4) {
-    display: none;
-  }
   .field-label select,
   .field-label > input {
     font-size: 16px;
@@ -1835,5 +1832,102 @@ h3 {
   }
   .action-card > h2 {
     font-size: 25px;
+  }
+}
+
+/* Five primary destinations; optional utilities use a standard disclosure. */
+.sidebar #primary-navigation {
+  display: block;
+  margin-top: 40px;
+}
+.sidebar nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.sidebar nav li + li {
+  margin-top: 4px;
+}
+.sidebar nav a,
+.sidebar nav .more-toggle {
+  min-height: 44px;
+  padding: 12px;
+  font-size: 14px;
+  text-align: left;
+  justify-content: flex-start;
+}
+.sidebar nav .more-toggle {
+  width: 100%;
+  margin-top: 12px;
+  color: var(--green);
+  justify-content: space-between;
+}
+.more-toggle::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  margin-right: 4px;
+}
+.more-toggle[aria-expanded="true"]::after {
+  transform: rotate(225deg);
+}
+.sidebar nav .secondary-links {
+  margin: 8px 0 0 12px;
+  padding-left: 10px;
+  border-left: 1px solid var(--line);
+}
+.sidebar nav .secondary-links[hidden] {
+  display: none;
+}
+.sidebar nav .secondary-links a {
+  font-size: 12px;
+}
+.sidebar .sidebar-bottom {
+  margin-top: auto;
+  padding-top: 32px;
+}
+.portfolio-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 24px 0 0;
+  border-bottom: 1px solid var(--line);
+}
+.portfolio-navigation a {
+  min-height: 44px;
+  padding: 12px 14px;
+  font-size: 13px;
+  border-bottom: 2px solid transparent;
+}
+.portfolio-navigation a.active {
+  border-color: var(--green);
+  font-weight: 700;
+}
+@media (max-width: 820px) {
+  .sidebar #primary-navigation {
+    margin-top: 14px;
+  }
+  .sidebar #primary-navigation[data-expanded="false"] {
+    display: none;
+  }
+  .sidebar nav .primary-links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .sidebar nav li + li {
+    margin-top: 0;
+  }
+  .sidebar nav .secondary-links {
+    margin-left: 0;
+  }
+  .sidebar nav .secondary-links a {
+    font-size: 13px;
+  }
+  .sidebar nav .more-toggle {
+    margin-top: 4px;
   }
 }
