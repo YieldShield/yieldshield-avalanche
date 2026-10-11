@@ -262,14 +262,17 @@ export function MarketCard({ market }: { market: Market }) {
 export function Empty({
   title,
   children,
+  headingLevel = 2,
 }: {
   title: string;
   children: ReactNode;
+  headingLevel?: 1 | 2;
 }) {
+  const Heading = headingLevel === 1 ? "h1" : "h2";
   return (
     <div className="empty-state">
       <span aria-hidden>◇</span>
-      <h3>{title}</h3>
+      <Heading>{title}</Heading>
       <p>{children}</p>
     </div>
   );

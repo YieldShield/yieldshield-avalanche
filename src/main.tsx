@@ -19,6 +19,7 @@ const CreatePool = lazy(() =>
 );
 import { Portfolio, Activity, Faucet, Status, Assets } from "./AccountPages";
 import { Guide, Legal } from "./Guide";
+import { RouteOrientation, routeName } from "./navigation";
 function App() {
   const { account, connect, message, setMessage, markets, loading } =
     useAlpine();
@@ -52,9 +53,13 @@ function App() {
   ];
   return (
     <div className="app-shell">
+      <RouteOrientation />
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
       <aside className="sidebar">
         <RouteLink to="/" className="brand">
-          <img src="/mark.svg" alt="" />
+          <img src="/mark.svg" alt="" width="38" height="38" />
           <span>
             YieldShield<small>ALPINE / AVALANCHE</small>
           </span>
@@ -78,13 +83,10 @@ function App() {
           <RouteLink to="/legal">Terms & risks ↗</RouteLink>
         </div>
       </aside>
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <header>
           <div className="breadcrumb">
-            Alpine <span>/</span>{" "}
-            {location.pathname === "/"
-              ? "Overview"
-              : location.pathname.split("/")[1].replaceAll("-", " ")}
+            Alpine <span>/</span> {routeName(location.pathname)}
           </div>
           <div className="header-actions">
             <span className="network">
@@ -119,6 +121,7 @@ function App() {
           )}
           {invalidPool || mismatchedPool ? (
             <Empty
+              headingLevel={1}
               title={
                 loading
                   ? "Loading market registry…"
@@ -151,7 +154,7 @@ function App() {
                 <Route
                   path="*"
                   element={
-                    <Empty title="Page not found">
+                    <Empty headingLevel={1} title="Page not found">
                       Explore <RouteLink to="/markets">markets</RouteLink> to
                       find a route.
                     </Empty>
