@@ -47,12 +47,12 @@ export function Portfolio() {
         ].map((a) => (
           <article className="market-card" key={a.key}>
             <div className="eyebrow">WALLET / {a.symbol}</div>
-            <h3>
+            <h2>
               {balances[a.key] !== undefined
                 ? fmt(balances[a.key], a.decimals, 8)
                 : "—"}{" "}
               <small>{a.symbol}</small>
-            </h3>
+            </h2>
             <RouteLink className="hero-link" to="/trade">
               Trade or convert ↗
             </RouteLink>
@@ -70,7 +70,7 @@ export function Portfolio() {
               floor = own.reduce((n, p) => n + p.floor, 0n);
             return (
               <article key={m.key}>
-                <h3>{m.name}</h3>
+                <h2>{m.name}</h2>
                 <Facts
                   items={[
                     [
@@ -133,7 +133,7 @@ export function Activity() {
           <article key={a.hash}>
             <div className="transaction-row">
               <div>
-                <h3>{a.label}</h3>
+                <h2>{a.label}</h2>
                 <p>
                   {new Date(a.time).toLocaleString("en-US")} · {a.status}
                 </p>
@@ -175,7 +175,7 @@ export function Faucet() {
       />
       <div className="market-grid">
         <section className="action-card">
-          <h3>Claim 10,000 aDEMO</h3>
+          <h2>Claim 10,000 aDEMO</h2>
           <p>
             The contract faucet permits one claim per wallet per hour. aDEMO is
             not Circle USDC and is not dollar redeemable.
@@ -211,10 +211,14 @@ export function Faucet() {
           >
             Claim aDEMO
           </ActionButton>
-          {error && <p className="error-note">{error}</p>}
+          {error && (
+            <p className="error-note" role="alert">
+              {error}
+            </p>
+          )}
         </section>
         <section className="market-card">
-          <h3>Fuji AVAX for gas</h3>
+          <h2>Fuji AVAX for gas</h2>
           <p className="card-description">
             Use the official Avalanche faucet with your own test wallet.
             Contract deployment is currently deferred; this website does not ask
@@ -258,7 +262,7 @@ export function Status() {
       />
       <div className="market-grid">
         <article className="market-card">
-          <h3>{ready ? "Contracts configured" : "Fuji deployment pending"}</h3>
+          <h2>{ready ? "Contracts configured" : "Fuji deployment pending"}</h2>
           <Facts
             items={[
               [
@@ -286,7 +290,7 @@ export function Status() {
           </p>
         </article>
         <article className="market-card">
-          <h3>Deployment addresses</h3>
+          <h2>Deployment addresses</h2>
           {[
             "factory",
             "exchange",
@@ -316,7 +320,7 @@ export function Status() {
       <div className="table-list">
         {markets.map((m) => (
           <article key={m.key}>
-            <h3>{m.name}</h3>
+            <h2>{m.name}</h2>
             <Facts
               items={[
                 [
@@ -337,14 +341,22 @@ export function Status() {
               ]}
             />
             {snapshots[m.key]?.oracleError && (
-              <p className="error-note">{snapshots[m.key].oracleError}</p>
+              <p className="error-note" role="alert">
+                {snapshots[m.key].oracleError}
+              </p>
             )}
-            {errors[m.key] && <p className="error-note">{errors[m.key]}</p>}
+            {errors[m.key] && (
+              <p className="error-note" role="alert">
+                {errors[m.key]}
+              </p>
+            )}
           </article>
         ))}
       </div>
       {errors.registry && (
-        <p className="error-note">Registry read: {errors.registry}</p>
+        <p className="error-note" role="alert">
+          Registry read: {errors.registry}
+        </p>
       )}
     </>
   );
@@ -383,9 +395,9 @@ export function Assets() {
             <div className="eyebrow">
               INTEGRATED CAPABILITY / {a.decimals} DECIMALS
             </div>
-            <h3>
+            <h2>
               {a.name} · {a.symbol}
-            </h3>
+            </h2>
             <p>{a.description}</p>
             {a.key === "native" ? (
               <small>Native network asset · no token contract</small>
@@ -405,7 +417,7 @@ export function Assets() {
         ))}
       </div>
       <div className="field-note">
-        <h3>Research references</h3>
+        <h2>Research references</h2>
         <p>
           BENQI sAVAX and Circle USDC are not integrated in this deployment.
           They cannot be bought, protected or provided here. A production

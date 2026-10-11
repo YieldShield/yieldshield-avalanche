@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { type ReactNode, useId } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { assets, fmt, type Market } from "./chain";
 import { useAlpine } from "./state";
@@ -140,20 +140,32 @@ export function Amount({
   label?: string;
   max?: string;
 }) {
+  const id = useId();
+  const native = symbol === "AVAX";
   return (
-    <label className="field-label">
-      {label}
+    <div className="field-label">
+      <label htmlFor={id}>{label}</label>
       <div className="amount-input">
         <input
+          id={id}
+          name={label.toLowerCase().replaceAll(" ", "-")}
           aria-label={label}
+          aria-describedby={`${id}-hint`}
           inputMode="decimal"
+          autoComplete="off"
+          spellCheck={false}
+          maxLength={78}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="0.00"
         />
-        <span>{symbol}</span>
+        <span translate="no">{symbol}</span>
       </div>
-      {max && (
+      <span className="amount-help" id={`${id}-hint`}>
+        Amount in {symbol}.
+        {native ? " Keep some AVAX available for network fees." : ""}
+      </span>
+      {max && !native && (
         <button
           type="button"
           className="text-button"
@@ -162,7 +174,7 @@ export function Amount({
           Use maximum · {max}
         </button>
       )}
-    </label>
+    </div>
   );
 }
 export function Risk({
@@ -192,7 +204,14 @@ export function Risk({
     </div>
   );
 }
-export function MarketCard({ market }: { market: Market }) {
+export function MarketCard({
+  market,
+  headingLevel = 3,
+}: {
+  market: Market;
+  headingLevel?: 2 | 3;
+}) {
+  const Heading = headingLevel === 2 ? "h2" : "h3";
   const { snapshots } = useAlpine();
   const s = snapshots[market.key],
     asset = assets.find((a) => a.key === market.asset)!;
@@ -209,7 +228,7 @@ export function MarketCard({ market }: { market: Market }) {
         </div>
         <span className="test-pill">{s ? "TESTNET" : "PREPARED"}</span>
       </div>
-      <h3>{market.name}</h3>
+      <Heading>{market.name}</Heading>
       <p className="card-description">
         {asset.symbol} / {market.backingSymbol}
       </p>

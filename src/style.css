@@ -1809,3 +1809,32 @@ h3 {
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
+/* Semantic headings retain the existing card hierarchy visually. */
+.market-card > h2,
+.action-card > h2 {
+  font-size: 24px;
+  letter-spacing: -0.8px;
+}
+.asset-cards h2,
+.field-note h2 {
+  font-size: 21px;
+  margin: 17px 0 13px;
+}
+.table-list article h2 {
+  font-size: 19px;
+}
+.success-panel h2 {
+  font-size: 24px;
+}
+.amount-help {
+  display: block;
+  margin-top: 9px;
+}
+@media (max-width: 580px) {
+  .market-card > h2 {
+    font-size: 28px;
+  }
+  .action-card > h2 {
+    font-size: 25px;
+  }
+}

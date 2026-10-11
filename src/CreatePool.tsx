@@ -136,7 +136,7 @@ export function CreatePool() {
         <section className="action-card">
           {success ? (
             <div className="success-panel">
-              <h3>Market created.</h3>
+              <h2>Market created.</h2>
               <p>
                 Your creation seed belongs to you as provider shares. The
                 factory registered the actual contract.
@@ -153,6 +153,7 @@ export function CreatePool() {
               <label className="field-label">
                 Protected asset
                 <select
+                  name="protected-asset"
                   value={asset}
                   onChange={(e) => setAsset(e.target.value)}
                 >
@@ -166,6 +167,7 @@ export function CreatePool() {
               <label className="field-label">
                 Junior backing
                 <select
+                  name="backing-asset"
                   value={backing}
                   onChange={(e) => setBacking(e.target.value)}
                 >
@@ -179,6 +181,7 @@ export function CreatePool() {
                 <label className="field-label">
                   Oracle
                   <select
+                    name="oracle-source"
                     value={source}
                     onChange={(e) => setSource(e.target.value)}
                   >
@@ -194,6 +197,8 @@ export function CreatePool() {
                   <label className="field-label" key={key}>
                     {label}
                     <input
+                      name={key}
+                      autoComplete="off"
                       type="number"
                       min={min}
                       max={max}
@@ -240,12 +245,16 @@ export function CreatePool() {
                   Review market creation
                 </ActionButton>
               )}
-              {error && <p className="error-note">{error}</p>}
+              {error && (
+                <p className="error-note" role="alert">
+                  {error}
+                </p>
+              )}
             </>
           )}
         </section>
         <section className="market-card">
-          <h3>A real independent market.</h3>
+          <h2>A real independent market.</h2>
           <p className="card-description">
             The seed is 500 units of your selected backing token. It is credited
             to you as provider shares, not consumed as a listing fee.

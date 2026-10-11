@@ -16,7 +16,7 @@ export function Guide() {
       <div className="asset-cards">
         <article>
           <div className="eyebrow">01 / HOLDER</div>
-          <h3>Choose your exit.</h3>
+          <h2>Choose your exit.</h2>
           <p>
             Deposit an asset at the market price. After the exit delay, withdraw
             part or all of the asset and pay gain fees, or surrender that slice
@@ -27,7 +27,7 @@ export function Guide() {
         </article>
         <article>
           <div className="eyebrow">02 / CAPITAL PROVIDER</div>
-          <h3>Back the downside.</h3>
+          <h2>Back the downside.</h2>
           <p>
             Deposit aDEMO or backing-vault receipts into a market. Positive
             asset exits create independently claimable fees. Backing exits
@@ -94,7 +94,7 @@ export function Guide() {
       <Risk />
       <Risk provider />
       <div className="field-note">
-        <h3>Why an epoch?</h3>
+        <h2>Why an epoch?</h2>
         <p>
           Provider entries and redemptions pause while any position is open.
           This prevents someone redeeming an overstated share value before
@@ -102,13 +102,13 @@ export function Guide() {
           settle each remaining position without its owner. Backing credit is
           reserved separately until the owner claims it.
         </p>
-        <h3>What happens on a partial exit?</h3>
+        <h2>What happens on a partial exit?</h2>
         <p>
           The withdrawn slice gets its proportional entry claim; rounding
           preserves the remainder. Gain fees apply only to the withdrawn slice.
           Remaining protection keeps its original opening time and maturity.
         </p>
-        <h3>What is a vault-backed floor?</h3>
+        <h2>What is a vault-backed floor?</h2>
         <p>
           A bvaDEMO-backed position promises a number of vault receipts. The
           underlying aDEMO those receipts redeem for can change. There is no
@@ -127,13 +127,13 @@ export function Legal() {
         description="Alpine is an unaudited, valueless testnet prototype. It is not insurance, a guaranteed return or a production investment product."
       />
       <div className="field-note">
-        <h3>Use test assets only</h3>
+        <h2>Use test assets only</h2>
         <p>
           All contracts are gated to Fuji or local test chains. aDEMO, awAVAX,
           vaDEMO and bvaDEMO are Alpine test assets. Nothing here represents
           Circle USDC, BENQI sAVAX, canonical WAVAX or redeemable dollars.
         </p>
-        <h3>Economic and technical risks</h3>
+        <h2>Economic and technical risks</h2>
         <p>
           Providers may lose their backing. Holder protection is limited to a
           fixed token-unit claim and depends on contract correctness. Oracle
@@ -142,14 +142,14 @@ export function Legal() {
           and network interruptions are possible. At maturity, forced settlement
           forfeits remaining asset upside.
         </p>
-        <h3>Browser data</h3>
+        <h2>Browser data</h2>
         <p>
           The app stores transaction hashes, account addresses and labels
           locally in your browser for its Activity journal. It does not store
           private keys or recovery phrases. The RPC provider and your wallet
           receive requests needed to read and transact.
         </p>
-        <h3>Production readiness</h3>
+        <h2>Production readiness</h2>
         <p>
           Source tests and local demonstrations do not replace an independent
           security audit, live contract verification or production integration

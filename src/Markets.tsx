@@ -90,7 +90,7 @@ export function PoolDetail() {
   );
   if (!market)
     return (
-      <Empty title="Market not found">
+      <Empty headingLevel={1} title="Market not found">
         Return to <RouteLink to="/markets">markets</RouteLink> or refresh after
         the factory registry loads.
       </Empty>
@@ -105,9 +105,9 @@ export function PoolDetail() {
         description={`${asset.symbol} protected with ${market.backingSymbol} collateral. ${market.source}.`}
       />
       <div className="market-grid">
-        <MarketCard market={market} />
+        <MarketCard market={market} headingLevel={2} />
         <article className="action-card">
-          <h3>Know the terms</h3>
+          <h2>Know the terms</h2>
           <Facts
             items={[
               [

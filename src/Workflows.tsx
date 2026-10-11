@@ -222,7 +222,7 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
           <MarketSelect />
           {success ? (
             <div className="success-panel">
-              <h3>{provider ? "Capital provided." : "Protection opened."}</h3>
+              <h2>{provider ? "Capital provided." : "Protection opened."}</h2>
               <p>
                 The transaction was confirmed. Your position is ready to manage.
               </p>
@@ -313,7 +313,7 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
           )}
         </section>
         <section className="market-card">
-          <h3>{market.name}</h3>
+          <h2>{market.name}</h2>
           <Facts
             items={[
               ["Protected asset", asset.symbol],
@@ -421,10 +421,10 @@ export function Positions() {
         {own.map(({ m, p }) => (
           <article key={`${m.key}:${p.id}`}>
             <div className="eyebrow">HOLDER / {m.name}</div>
-            <h3>
+            <h2>
               {fmt(p.amount, 18, 8)}{" "}
               {assets.find((a) => a.key === m.asset)!.symbol}
-            </h3>
+            </h2>
             <p>
               Remaining entry claim: {fmt(p.floor)} {m.backingSymbol}
             </p>
@@ -567,9 +567,9 @@ export function PositionDetail() {
       />
       <div className="market-grid">
         <section className="market-card">
-          <h3>
+          <h2>
             {fmt(p.amount, 18, 8)} {asset.symbol}
-          </h3>
+          </h2>
           <Facts
             items={[
               ["Entry claim", `${fmt(p.floor, 6, 6)} ${m.backingSymbol}`],
@@ -591,7 +591,7 @@ export function PositionDetail() {
           <Risk backing={m.backingSymbol} />
         </section>
         <section className="action-card">
-          <h3>Manage protection</h3>
+          <h2>Manage protection</h2>
           {matured ? (
             <>
               <p>
@@ -638,6 +638,9 @@ export function PositionDetail() {
                 <label className="field-label">
                   Recipient address
                   <input
+                    name="recipient-address"
+                    autoComplete="off"
+                    spellCheck={false}
                     value={recipient}
                     onChange={(e) => setRecipient(e.target.value)}
                     placeholder="0x…"
@@ -762,7 +765,7 @@ export function ProviderPosition({ marketKey }: { marketKey: string }) {
   return (
     <article>
       <div className="eyebrow">CAPITAL PROVIDER / {m.name}</div>
-      <h3>{fmt(s.ownShares, 18, 8)} provider shares</h3>
+      <h2>{fmt(s.ownShares, 18, 8)} provider shares</h2>
       <Facts
         items={[
           ["Earned gain fees", `${fmt(s.earned, 18, 10)} ${symbol}`],
@@ -899,7 +902,11 @@ export function ProviderPosition({ marketKey }: { marketKey: string }) {
             ))}
           </div>
         )}
-      {error && <p className="error-note">{error}</p>}
+      {error && (
+        <p className="error-note" role="alert">
+          {error}
+        </p>
+      )}
     </article>
   );
 }

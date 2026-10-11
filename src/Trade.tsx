@@ -179,11 +179,12 @@ export function Trade() {
       )}
       <div className="market-grid">
         <section className="action-card">
-          <h3>Test-asset exchange</h3>
+          <h2>Test-asset exchange</h2>
           <label className="field-label">
             Asset
             <select
               aria-label="Asset"
+              name="trade-asset"
               value={assetKey}
               onChange={(e) => setAssetKey(e.target.value)}
             >
@@ -198,6 +199,7 @@ export function Trade() {
             {(["buy", "sell"] as const).map((v) => (
               <button
                 key={v}
+                aria-pressed={side === v}
                 className={side === v ? "active" : ""}
                 onClick={() => setSide(v)}
               >
@@ -207,7 +209,7 @@ export function Trade() {
           </div>
           {success ? (
             <div className="success-panel">
-              <h3>Trade confirmed.</h3>
+              <h2>Trade confirmed.</h2>
               <p>
                 {side === "buy"
                   ? `${amount} ${asset.symbol} is now in your wallet. Protection is a separate transaction.`
@@ -310,7 +312,7 @@ export function Trade() {
         </section>
         <section className="market-card">
           <div className="eyebrow">ACTUAL FUNDED INVENTORY</div>
-          <h3>{asset.name}</h3>
+          <h2>{asset.name}</h2>
           <p className="card-description">{asset.description}</p>
           <Facts
             items={[
@@ -494,6 +496,7 @@ export function Conversions() {
           Conversion
           <select
             aria-label="Conversion"
+            name="conversion-kind"
             value={kind}
             onChange={(e) => setKind(e.target.value)}
           >
@@ -543,7 +546,11 @@ export function Conversions() {
           </ActionButton>
         )}
         {success && <p className="feedback">{success}</p>}
-        {error && <p className="error-note">{error}</p>}
+        {error && (
+          <p className="error-note" role="alert">
+            {error}
+          </p>
+        )}
       </div>
     </section>
   );
