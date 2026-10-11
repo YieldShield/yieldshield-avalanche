@@ -58,7 +58,28 @@ export function Navigation() {
           aria-current={
             active ? (location.pathname === to ? "page" : "true") : undefined
           }
-          onClick={close}
+          onClick={(event) => {
+            // A same-path link can still change query state. RouteOrientation
+            // intentionally ignores those changes to avoid stealing form focus.
+            // Move focus explicitly only for this navigation action, before its
+            // disclosure hides the activated link.
+            if (
+              event.button !== 0 ||
+              event.metaKey ||
+              event.ctrlKey ||
+              event.shiftKey ||
+              event.altKey
+            )
+              return;
+            if (location.pathname === to) {
+              const target =
+                document.querySelector<HTMLElement>("#main-content h1") ||
+                document.getElementById("main-content");
+              target?.setAttribute("tabindex", "-1");
+              target?.focus({ preventScroll: true });
+            }
+            close();
+          }}
         >
           {label}
         </Link>
