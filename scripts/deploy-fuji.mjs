@@ -8,6 +8,8 @@ process.chdir(root);
 const broadcast = process.argv.includes("--broadcast");
 const manifestPath = "config/deployment.json";
 const manifest = JSON.parse(readFileSync(manifestPath));
+if (manifest.version !== 2)
+  throw new Error("This deployment plan requires manifest version 2.");
 if (manifest.chainId !== 43113)
   throw new Error("Manifest must target Fuji 43113");
 const c = createPublicClient({
@@ -40,9 +42,9 @@ if (!broadcast) {
   );
   process.exit(0);
 }
-if (balance < 10n ** 16n)
+if (balance < 10n ** 17n)
   throw new Error(
-    "Need at least 0.01 faucet-funded Fuji AVAX. No real-money funding is permitted.",
+    "Need at least 0.1 faucet-funded Fuji AVAX for gas plus 0.02 test AVAX exchange inventory. No real-money funding is permitted.",
   );
 const w = createWalletClient({
   account,
@@ -105,8 +107,8 @@ async function send(label, request) {
 }
 async function deploy(field, artifact, args = []) {
   if (manifest[field]) {
-    if ((await c.getCode({ address: manifest[field] })) === "0x")
-      throw new Error(`${field} has no code`);
+    const code = await c.getCode({ address: manifest[field] });
+    if (!code || code === "0x") throw new Error(`${field} has no code`);
     return;
   }
   const { encodeDeployData } = await import("viem");
@@ -121,49 +123,27 @@ async function deploy(field, artifact, args = []) {
   manifest[field] = receipt.contractAddress;
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
 }
-await deploy("backingToken", token);
-await deploy("scenarioOracle", scenario);
-await deploy("referenceOracle", reference, [
-  manifest.chainlinkFeed,
-  BigInt(manifest.maxPriceAge),
-]);
-await deploy("scenarioPool", pool, [
-  manifest.backingToken,
-  manifest.scenarioOracle,
-  account.address,
-  account.address,
-]);
-await deploy("referencePool", pool, [
-  manifest.backingToken,
-  manifest.referenceOracle,
-  account.address,
-  account.address,
-]);
+const { setupMarkets } = await import("./setup-markets.mjs");
 const { encodeFunctionData } = await import("viem");
-await send("faucet", {
-  to: manifest.backingToken,
-  data: encodeFunctionData({ abi: token.abi, functionName: "faucet" }),
+await setupMarkets({
+  manifest,
+  account: account.address,
+  deploy,
+  save: async () =>
+    writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n"),
+  call: async (label, request) =>
+    request.to
+      ? send(label, request)
+      : send(label, {
+          to: request.address,
+          data: encodeFunctionData({
+            abi: request.abi,
+            functionName: request.functionName,
+            args: request.args,
+          }),
+          value: request.value,
+        }),
 });
-for (const field of ["scenarioPool", "referencePool"]) {
-  await send(`${field}-approve`, {
-    to: manifest.backingToken,
-    data: encodeFunctionData({
-      abi: token.abi,
-      functionName: "approve",
-      args: [manifest[field], 5000_000000n],
-    }),
-  });
-  await send(`${field}-seed`, {
-    to: manifest[field],
-    data: encodeFunctionData({
-      abi: pool.abi,
-      functionName: "depositJunior",
-      args: [5000_000000n, 1n],
-    }),
-  });
-}
-manifest.status = "deployed-awaiting-verification";
-writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
 console.log(
   "Deployment mined. Run npm run verify:fuji before presenting the markets as verified.",
 );
