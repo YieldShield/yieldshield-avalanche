@@ -15,6 +15,8 @@ import { RouteLink, Notice, Empty } from "./ui";
 import "./style.css";
 import { Trade } from "./Trade";
 import { CreatePool } from "./CreatePool";
+import { Portfolio, Activity, Faucet, Status, Assets } from "./AccountPages";
+import { Guide, Legal } from "./Guide";
 function App() {
   const { account, connect, message, setMessage } = useAlpine();
   const location = useLocation();
@@ -106,6 +108,16 @@ function App() {
             <Route path="/provide" element={<RoleFlow role="provide" />} />
             <Route path="/positions" element={<Positions />} />
             <Route path="/positions/:key" element={<PositionDetail />} />
+            <Route path="/trade" element={<Trade />} />
+            <Route path="/create-pool" element={<CreatePool />} />
+            <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/activity" element={<Activity />} />
+            <Route path="/faucet" element={<Faucet />} />
+            <Route path="/assets" element={<Assets />} />
+            <Route path="/status" element={<Status />} />
+            <Route path="/how-it-works" element={<Guide />} />
+            <Route path="/learn/scenarios" element={<Guide />} />
+            <Route path="/legal" element={<Legal />} />
             <Route
               path="*"
               element={
