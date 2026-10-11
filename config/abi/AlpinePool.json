@@ -236,6 +236,35 @@
   },
   {
     "type": "function",
+    "name": "depositJuniorBounded",
+    "inputs": [
+      {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "minShares",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "deadline",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "earned",
     "inputs": [
       {
@@ -858,6 +887,34 @@
       },
       {
         "name": "minAsset",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "withdrawJuniorBounded",
+    "inputs": [
+      {
+        "name": "burn",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "minBacking",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "minAsset",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "deadline",
         "type": "uint256",
         "internalType": "uint256"
       }

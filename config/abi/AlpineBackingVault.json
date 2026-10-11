@@ -323,7 +323,7 @@
         "internalType": "string"
       }
     ],
-    "stateMutability": "view"
+    "stateMutability": "pure"
   },
   {
     "type": "function",
@@ -480,7 +480,7 @@
         "internalType": "string"
       }
     ],
-    "stateMutability": "view"
+    "stateMutability": "pure"
   },
   {
     "type": "function",
