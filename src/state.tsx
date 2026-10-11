@@ -112,7 +112,10 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
   const generation = useRef(0),
     currentAccount = useRef<Address | null>(null);
   const ready = Boolean(
-    config.factory && config.referencePool && config.backingToken,
+    config.factory &&
+    config.referencePool &&
+    config.backingToken &&
+    ["deployed-and-verified", "local-only-verified"].includes(config.status),
   );
   useEffect(() => {
     try {
