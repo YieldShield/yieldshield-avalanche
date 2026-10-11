@@ -91,6 +91,7 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
     [market.key, params.get("amount")],
   );
   async function review() {
+    setError("");
     const assertCurrent = guard();
     setWorking(true);
     setError("");
@@ -147,6 +148,7 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
     }
   }
   async function confirm() {
+    setError("");
     const assertCurrent = guard();
     if (!quote || !market.address) return;
     setWorking(true);
@@ -495,6 +497,7 @@ export function PositionDetail() {
     own = p.owner.toLowerCase() === account?.toLowerCase(),
     matured = chainTime >= s.maturity;
   async function review() {
+    setError("");
     const assertCurrent = guard();
     try {
       if (!account || !m?.address || !p) throw new Error("Connect first.");
@@ -541,6 +544,7 @@ export function PositionDetail() {
     }
   }
   async function confirm() {
+    setError("");
     const assertCurrent = guard();
     try {
       if (!q || !m?.address || !p) return;
@@ -728,6 +732,7 @@ export function ProviderPosition({ marketKey }: { marketKey: string }) {
     }
   }
   async function review() {
+    setError("");
     const assertCurrent = guard();
     try {
       const n = units(amount);
@@ -754,6 +759,7 @@ export function ProviderPosition({ marketKey }: { marketKey: string }) {
     }
   }
   async function confirm() {
+    setError("");
     const assertCurrent = guard();
     if (!q) return;
     try {

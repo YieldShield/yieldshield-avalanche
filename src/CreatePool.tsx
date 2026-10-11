@@ -45,6 +45,7 @@ export function CreatePool() {
           : config.referenceOracle;
   const guard = useReviewGuard([asset, backing, source, terms, identity]);
   async function check() {
+    setError("");
     const assertCurrent = guard();
     try {
       if (!account) throw new Error("Connect first.");
@@ -88,6 +89,7 @@ export function CreatePool() {
     }
   }
   async function confirm() {
+    setError("");
     const assertCurrent = guard();
     try {
       if (

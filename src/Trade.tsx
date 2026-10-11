@@ -64,6 +64,7 @@ export function Trade() {
     setError("");
   }, [assetKey, side, amount, identity]);
   async function review() {
+    setError("");
     const assertCurrent = guard();
     setWorking(true);
     try {
@@ -111,6 +112,7 @@ export function Trade() {
     }
   }
   async function confirm() {
+    setError("");
     const assertCurrent = guard();
     if (!q) return;
     setWorking(true);
@@ -434,6 +436,7 @@ export function Conversions() {
         ? "backing-vault"
         : "vault";
   async function review() {
+    setError("");
     const assertCurrent = guard();
     try {
       if (!account || !target)
@@ -467,6 +470,7 @@ export function Conversions() {
     }
   }
   async function confirm() {
+    setError("");
     const assertCurrent = guard();
     if (!q) return;
     try {
