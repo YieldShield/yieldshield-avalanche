@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from "react";
+import React, { lazy, Suspense, useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import {
   BrowserRouter,
@@ -24,6 +24,8 @@ function App() {
   const { account, connect, message, setMessage, markets, loading } =
     useAlpine();
   const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => setMenuOpen(false), [location.pathname]);
   const selected = new URLSearchParams(location.search).get("pool");
   const invalidPool =
     selected &&
@@ -58,14 +60,30 @@ function App() {
         Skip to content
       </a>
       <aside className="sidebar">
-        <RouteLink to="/" className="brand">
-          <img src="/mark.svg" alt="" width="38" height="38" />
-          <span>
-            YieldShield<small>ALPINE / AVALANCHE</small>
-          </span>
-        </RouteLink>
+        <div className="brand-row">
+          <RouteLink to="/" className="brand">
+            <img src="/mark.svg" alt="" width="38" height="38" />
+            <span>
+              YieldShield<small>ALPINE / AVALANCHE</small>
+            </span>
+          </RouteLink>
+          <button
+            type="button"
+            className="menu-toggle"
+            aria-expanded={menuOpen}
+            aria-controls="primary-navigation"
+            onClick={() => setMenuOpen((v) => !v)}
+          >
+            {menuOpen ? "Close menu" : "Menu"}
+            <span aria-hidden="true">{menuOpen ? "−" : "+"}</span>
+          </button>
+        </div>
         <div className="nav-caption">YOUR EXPEDITION</div>
-        <nav aria-label="Main navigation">
+        <nav
+          id="primary-navigation"
+          aria-label="Main navigation"
+          data-expanded={menuOpen}
+        >
           {nav.map(([to, label, icon]) => (
             <NavLink
               key={to}
