@@ -192,12 +192,23 @@ function App() {
     </div>
   );
 }
-createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <AlpineProvider>
-        <App />
-      </AlpineProvider>
-    </BrowserRouter>
-  </React.StrictMode>,
-);
+async function bootstrap() {
+  if (
+    import.meta.env.DEV &&
+    import.meta.env.VITE_LOCAL_DEMO === "true" &&
+    import.meta.env.VITE_LOCAL_WALLET === "true"
+  ) {
+    const { installLocalWallet } = await import("./local-wallet");
+    await installLocalWallet();
+  }
+  createRoot(document.getElementById("root")!).render(
+    <React.StrictMode>
+      <BrowserRouter>
+        <AlpineProvider>
+          <App />
+        </AlpineProvider>
+      </BrowserRouter>
+    </React.StrictMode>,
+  );
+}
+void bootstrap();

@@ -11,6 +11,7 @@ const child = spawn(
     env: {
       ...process.env,
       VITE_LOCAL_DEMO: "true",
+      VITE_LOCAL_WALLET: process.argv.includes("--wallet") ? "true" : "false",
       VITE_LOCAL_MANIFEST: JSON.stringify(manifest),
     },
   },
