@@ -3,7 +3,7 @@
   "status": "awaiting-testnet-gas",
   "rpcUrl": "https://api.avax-test.network/ext/bc/C/rpc",
   "explorer": "https://testnet.snowtrace.io",
-  "deployer": "0x59EFc921242ef1a8140b723aa3277f168eaed2EC",
+  "deployer": "0x5e4258102df36863271F1271286f14b19966bad7",
   "backingToken": null,
   "scenarioOracle": null,
   "referenceOracle": null,

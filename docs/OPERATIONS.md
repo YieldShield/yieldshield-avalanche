@@ -2,7 +2,7 @@
 
 ## Fuji deployment is deferred
 
-The owner selected **prepare deployment for later** on 11 October 2026. The dedicated public test signer is `0x59EFc921242ef1a8140b723aa3277f168eaed2EC`. Its private key remains in an ignored owner-local `.secrets` file, never in source, browser code or logs. Only faucet-funded test AVAX may be used.
+The owner selected **prepare deployment for later** on 11 October 2026. On 12 October 2026 the owner replaced the earlier signer with a new dedicated Fuji-only test signer, `0x5e4258102df36863271F1271286f14b19966bad7`. Its private key remains in the ignored `.secrets/fuji-test-signer.json` file, never in source, browser code or logs. Only faucet-funded test AVAX may be used.
 
 1. Build and verify the exact checkout: `npm ci --ignore-scripts`, `npm run test:contracts`, `npm test`, `npm run build`.
 2. `npm run deploy:fuji` performs a read-only preflight of the chain, balance, git commit and artifact freshness. It does not broadcast.
