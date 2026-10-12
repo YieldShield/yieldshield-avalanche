@@ -55,7 +55,7 @@ contract AlpinePool is ReentrancyGuard {
     mapping(address => uint256) public withdrawalReadyAt;
     mapping(address => uint256) public claimableBacking;
     mapping(address => uint256) public claimableFees;
-    mapping(address => uint256) private rewardDebt;
+    mapping(address => uint256) private rewardPerSharePaid;
     mapping(address => uint256) private pendingRewards;
     event PositionTransferred(uint256 indexed id, address indexed from, address indexed to);
     event Protected(uint256 indexed id, address indexed owner, uint256 amount, uint256 floor);
@@ -124,17 +124,15 @@ contract AlpinePool is ReentrancyGuard {
         return totalBacking + (juniorInventory == 0 ? 0 : Math.mulDiv(juniorInventory, oracle.price(), 1 ether));
     }
 
+    /// @dev Accrues against a per-owner index snapshot. A rounded debt would credit up to one extra unit
+    /// per share change, letting total earnings exceed the reward inventory.
     function earned(address owner) public view returns (uint256) {
-        return pendingRewards[owner] + Math.mulDiv(shares[owner], rewardPerShare, RAY) - rewardDebt[owner];
+        return pendingRewards[owner] + Math.mulDiv(shares[owner], rewardPerShare - rewardPerSharePaid[owner], RAY);
     }
 
     function _checkpoint(address owner) private {
         pendingRewards[owner] = earned(owner);
-        rewardDebt[owner] = Math.mulDiv(shares[owner], rewardPerShare, RAY);
-    }
-
-    function _debt(address owner) private {
-        rewardDebt[owner] = Math.mulDiv(shares[owner], rewardPerShare, RAY);
+        rewardPerSharePaid[owner] = rewardPerShare;
     }
 
     function depositJunior(uint256 amount, uint256 minShares) external nonReentrant returns (uint256) {
@@ -170,7 +168,6 @@ contract AlpinePool is ReentrancyGuard {
         totalBacking += amount;
         totalShares += minted;
         shares[owner] += minted;
-        _debt(owner);
         withdrawalReadyAt[owner] = 0;
         emit JuniorDeposited(owner, amount, minted);
     }
@@ -218,7 +215,6 @@ contract AlpinePool is ReentrancyGuard {
         _checkpoint(msg.sender);
         shares[msg.sender] -= burn;
         totalShares -= burn;
-        _debt(msg.sender);
         totalBacking -= stableOut;
         juniorInventory -= assetOut;
         withdrawalReadyAt[msg.sender] = 0;
