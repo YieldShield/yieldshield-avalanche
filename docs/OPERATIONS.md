@@ -1,8 +1,8 @@
 # Operations
 
-## Fuji deployment is deferred
+## Fuji deployment
 
-The owner selected **prepare deployment for later** on 11 October 2026. On 12 October 2026 the owner replaced the earlier signer with a new dedicated Fuji-only test signer, `0x24b48b241bB2F8099e70EA664e196a1765845693`. The interim signer named in commit f8eec25 was discarded before funding and must never be funded. The private key remains in the ignored `.secrets/fuji-test-signer.json` file, never in source, browser code or logs. Only faucet-funded test AVAX may be used.
+The owner selected **prepare deployment for later** on 11 October 2026 and resumed it on 12 October 2026: deployment `fuji-2026-10-12T18-48-56Z-8bd0c9` is `deployed-and-verified` (see [the Fuji E2E](E2E_REPORT.md#fuji-e2e-12-october-2026)). On 12 October 2026 the owner replaced the earlier signer with a new dedicated Fuji-only test signer, `0x24b48b241bB2F8099e70EA664e196a1765845693`. The interim signer named in commit f8eec25 was discarded before funding and must never be funded. The private key remains in the ignored `.secrets/fuji-test-signer.json` file, never in source, browser code or logs. Only faucet-funded test AVAX may be used.
 
 1. Build and verify the exact checkout: `npm ci --ignore-scripts`, `npm run test:contracts`, `npm test`, `npm run build`.
 2. `npm run deploy:fuji` performs a read-only preflight of the chain, balance, git commit and artifact freshness. It does not broadcast.

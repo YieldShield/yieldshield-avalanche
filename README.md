@@ -4,9 +4,9 @@
 
 A distinct Avalanche implementation of YieldShield's split-risk markets: protected holders, capital providers, funded test trading, vault conversions and independently created pools.
 
-## Current status — 11 October 2026
+## Current status — 12 October 2026
 
-**Fuji contracts are prepared but not deployed.** The owner explicitly deferred contract deployment. The public frontend presents all workflows with writes disabled until a deployment is configured and verified. Local test-chain and browser evidence must not be presented as Fuji activity. No grant award, external investment, independent audit, mainnet readiness or real adoption is claimed.
+**Fuji contracts are deployed and verified.** Deployment `fuji-2026-10-12T18-48-56Z-8bd0c9` (26 transactions from commit `64f4a13`) passed `verify:fuji`, and the public frontend now enables writes against it. The addresses are in [config/deployment.json](config/deployment.json). A second test account completed a 19-transaction Fuji journey ([evidence](docs/evidence/fuji-e2e.json)). Featured markets accept protection until 11 November 2026 and then need replacements. Local test-chain and browser evidence must not be presented as Fuji activity. No grant award, external investment, independent audit, mainnet readiness or real adoption is claimed.
 
 The implemented catalog contains three protected assets and two backing choices:
 
