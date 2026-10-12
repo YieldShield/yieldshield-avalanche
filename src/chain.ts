@@ -213,7 +213,14 @@ export async function wallet() {
   try {
     await w.switchChain({ id: chain.id });
   } catch (e: any) {
-    if (e?.code === 4902 || e?.cause?.code === 4902) {
+    // MetaMask Mobile wraps "unknown chain" (4902) inside an internal -32603 error.
+    const unknownChain = [
+      e?.code,
+      e?.cause?.code,
+      e?.data?.originalError?.code,
+      e?.cause?.data?.originalError?.code,
+    ].includes(4902);
+    if (unknownChain) {
       await w.addChain({ chain });
       await w.switchChain({ id: chain.id });
     } else throw e;
