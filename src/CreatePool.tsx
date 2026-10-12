@@ -8,6 +8,7 @@ import {
   DEFAULT_TERMS,
   factoryAbi,
   oracleAbi,
+  tokenAbi,
   read,
   fmt,
   chainDeadline,
@@ -60,6 +61,11 @@ export function CreatePool() {
           "This asset and oracle are not approved by the factory.",
         );
       await read(oracle, oracleAbi, "price");
+      const held = await read(collateral, tokenAbi, "balanceOf", [account]);
+      if (held < seed)
+        throw new Error(
+          `Seeding needs ${fmt(seed)} ${backing === "cash" ? "aDEMO" : "bvaDEMO"}; this wallet holds ${fmt(held)}. ${backing === "cash" ? "Claim aDEMO from the faucet" : "Convert aDEMO to bvaDEMO on Trade"} first.`,
+        );
       if (
         terms.collateralBps < 12500 ||
         terms.collateralBps > 30000 ||
