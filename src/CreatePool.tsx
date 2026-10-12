@@ -52,10 +52,38 @@ export function CreatePool() {
       if (!account) throw new Error("Connect first.");
       if (Object.values(terms).some((v) => !Number.isSafeInteger(v)))
         throw new Error("Terms must use whole basis points and whole seconds.");
-      const [seed, allowed] = await Promise.all([
+      const [
+        seed,
+        allowed,
+        created,
+        community,
+        registry,
+        maxPools,
+        reserved,
+        perCreator,
+        protocol,
+      ] = await Promise.all([
         read(config.factory, factoryAbi, "CREATION_SEED"),
         read(config.factory, factoryAbi, "allowed", [chosen.address, oracle]),
+        read(config.factory, factoryAbi, "poolsCreatedBy", [account]),
+        read(config.factory, factoryAbi, "communityPools"),
+        read(config.factory, factoryAbi, "allPools"),
+        read(config.factory, factoryAbi, "MAX_POOLS"),
+        read(config.factory, factoryAbi, "PROTOCOL_RESERVED_POOLS"),
+        read(config.factory, factoryAbi, "MAX_POOLS_PER_CREATOR"),
+        read(config.factory, factoryAbi, "protocol"),
       ]);
+      const isProtocol = account.toLowerCase() === protocol.toLowerCase();
+      if (BigInt(registry.length) >= maxPools)
+        throw new Error(`The factory registry is full (${maxPools} markets).`);
+      if (!isProtocol && community >= maxPools - reserved)
+        throw new Error(
+          `All ${maxPools - reserved} community market slots are taken; the rest are reserved for featured markets.`,
+        );
+      if (!isProtocol && created >= perCreator)
+        throw new Error(
+          `Each wallet can create at most ${perCreator} community markets.`,
+        );
       if (!allowed)
         throw new Error(
           "This asset and oracle are not approved by the factory.",
@@ -280,6 +308,7 @@ export function CreatePool() {
               ["Approved protected assets", "AVAX · awAVAX · vaDEMO"],
               ["Approved backing", "aDEMO · bvaDEMO"],
               ["Position cap", "100 open positions; 0.01 minimum entry claim"],
+              ["Creation limit", "2 markets per wallet; 22 community slots"],
               ["Creator control", "Immutable terms; no seizure function"],
             ]}
           />

@@ -18,7 +18,7 @@ The shared `setup-markets.mjs` plan deploys the aDEMO faucet token, separate sce
 
 The seed faucet provides 10,000 aDEMO. Both vaults receive actual deposits; exchange inventory receives 1,000 aDEMO, 0.01 native AVAX, 0.01 awAVAX and 100 vaDEMO. These are finite balances. **No holder positions are seeded** so initial testers can provide capital immediately. Creator/protocol fee recipients are the dedicated test signer for this pilot.
 
-The factory registers at most 32 markets, each with at most 100 concurrently open positions and a 0.01 backing-unit minimum entry claim. Closed positions free their slot. It allows approved asset/oracle/backing combinations and bounded immutable terms; no arbitrary token can be listed. The factory's 500 unit seed is provider capital, not a listing fee. Fixed epochs are not renewed automatically.
+The factory registers at most 32 markets. Ten slots are reserved for the protocol account (featured markets and their replacements after maturity); community wallets share the other 22, at most two per wallet. Each market allows at most 100 concurrently open positions and a 0.01 backing-unit minimum entry claim. Closed positions free their slot. It allows approved asset/oracle/backing combinations and bounded immutable terms; no arbitrary token can be listed. The factory's 500 unit seed is provider capital, not a listing fee. Fixed epochs are not renewed automatically.
 
 ## Website and wallet behavior
 

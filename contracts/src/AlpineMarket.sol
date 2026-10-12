@@ -115,8 +115,15 @@ contract AlpineFactory is ReentrancyGuard {
     mapping(address => address) public backingOracles;
     uint256 public constant CREATION_SEED = 500e6;
     uint256 public constant MAX_POOLS = 32;
+    /// @notice Slots only the protocol account can fill, so featured markets (and their replacements
+    /// after maturity) cannot be crowded out by community creations.
+    uint256 public constant PROTOCOL_RESERVED_POOLS = 10;
+    /// @notice Community creators are limited per address so the shared registry is costly to fill.
+    uint256 public constant MAX_POOLS_PER_CREATOR = 2;
     address[] public pools;
     mapping(address => bool) public isPool;
+    mapping(address => uint256) public poolsCreatedBy;
+    uint256 public communityPools;
     event PoolCreated(
         address indexed pool, address indexed creator, address indexed asset, address oracle, uint256 seed
     );
@@ -182,6 +189,12 @@ contract AlpineFactory is ReentrancyGuard {
     ) private returns (address pool) {
         require(block.timestamp <= deadline, "DEADLINE");
         require(pools.length < MAX_POOLS, "REGISTRY_FULL");
+        if (msg.sender != protocol) {
+            require(communityPools < MAX_POOLS - PROTOCOL_RESERVED_POOLS, "COMMUNITY_SLOTS_FULL");
+            require(poolsCreatedBy[msg.sender] < MAX_POOLS_PER_CREATOR, "CREATOR_LIMIT");
+            communityPools++;
+        }
+        poolsCreatedBy[msg.sender]++;
         require(allowed(asset, oracle_), "UNAPPROVED_PAIR");
         require(backing_ == address(backing) || backing_ == address(backingVault), "UNAPPROVED_BACKING");
         address priced = backing_ == address(backing) ? oracle_ : backingOracles[oracle_];
