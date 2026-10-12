@@ -63,3 +63,19 @@ Development-wallet setup and test evidence are separate commits from these appli
 Native lifecycle receipts remain in [local-journey.json](evidence/local-journey.json). The final application source and production deployment are recorded in [HOSTING.md](HOSTING.md).
 
 Grant applications remain held for user review. This is functional verification, not a security audit.
+
+## Fuji E2E, 12 October 2026
+
+After `verify:fuji` marked deployment `fuji-2026-10-12T18-48-56Z-8bd0c9` as `deployed-and-verified`, a second disposable account (`0xe869786d91bc01b8A7cCb781a2229F6afe6aa088`) was funded with 0.25 test AVAX from the deployer. It completed **19 confirmed Fuji transactions** (17 from the tester, 2 from the deployer), recorded with public hashes, blocks, gas and decoded events in [fuji-e2e.json](evidence/fuji-e2e.json):
+
+| Path | Observed result |
+|---|---|
+| Faucet and provider capital | 10,000 aDEMO claimed; 1,000 aDEMO provided to the scenario market; withdrawal notice requested and cancelled |
+| Exchange and wrapper | 0.001 awAVAX bought from funded exchange inventory; 0.002 AVAX wrapped |
+| Protection | 0.003 awAVAX protected in the wrapped (Chainlink) market; 0.1 AVAX protected in the scenario market at 25 aDEMO/AVAX |
+| Partial asset exit with gain fees | Half the scenario position exited at 35 aDEMO/AVAX; `GainFeesCharged` 0.001429 AVAX provider reward and 0.000143 AVAX each to creator and protocol, as predicted |
+| Backing exits | Remaining scenario half and the full wrapped position exited to their fixed aDEMO floors |
+| Claims | Tester claimed its 0.000952 AVAX reward share (two thirds of providers); the deployer pulled creator and protocol fees |
+| Notice and redemption | After the 120-second notice, half the tester's provider shares redeemed for 499.583333 aDEMO plus 0.016667 AVAX surrendered inventory |
+
+All five featured markets ended with no open positions, so provider entry stays open. Not exercised on Fuji: maturity settlement and the segregated `claimBacking` credit, because featured epochs last 30 days (they are covered by the Solidity suite and the local journey). Ownership transfer and vault-receipt (vaDEMO/bvaDEMO) protection were also not exercised. A script signed with a disposable key, not a browser wallet extension. Before broadcasting, the same journey passed against a local fork of Fuji containing the real deployment.
