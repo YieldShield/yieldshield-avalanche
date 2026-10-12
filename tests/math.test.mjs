@@ -1,6 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { exitPreview, maxNewFloor, minimumOutput, WAD } from "../src/math.mjs";
+import {
+  exitPreview,
+  maxNewFloor,
+  minimumOutput,
+  safeError,
+  WAD,
+} from "../src/math.mjs";
 test("exits use only realized positive gains and precise units", () => {
   assert.deepEqual(exitPreview(WAD, 25_000000n, 50_000000n), {
     avaxOut: 940000000000000000n,
@@ -38,4 +44,24 @@ test("tiny quotes cannot lose more than the stated half percent", () => {
 test("zero-valued basket legs remain redeemable without allowing negative quotes", () => {
   assert.equal(minimumOutput(0n), 0n);
   assert.throws(() => minimumOutput(-1n));
+});
+test("decoded contract errors become plain sentences", () => {
+  const reverted = {
+    shortMessage: 'The contract function "protect" reverted.',
+    cause: { data: { errorName: "PositionLimit" } },
+  };
+  assert.equal(
+    safeError(reverted),
+    "This market already has 100 open positions.",
+  );
+  assert.equal(
+    safeError({
+      cause: { cause: { data: { errorName: "ERC20InsufficientBalance" } } },
+    }),
+    "Your token balance is too low for this transaction.",
+  );
+  assert.equal(
+    safeError({ shortMessage: "User rejected the request." }),
+    "User rejected the request.",
+  );
 });

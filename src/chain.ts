@@ -39,12 +39,26 @@ export const client = createPublicClient({
     batch: !multicall,
   }),
 });
-export const poolAbi = pool as Abi,
-  factoryAbi = factory as Abi,
-  exchangeAbi = exchange as Abi,
-  vaultAbi = vault as Abi,
-  wrapperAbi = wrapper as Abi,
-  tokenAbi = token as Abi;
+// Nested token calls revert with OpenZeppelin errors; include them so failures decode.
+const tokenErrors = parseAbi([
+  "error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed)",
+  "error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed)",
+  "error ERC20InvalidSender(address sender)",
+  "error ERC20InvalidReceiver(address receiver)",
+  "error SafeERC20FailedOperation(address token)",
+  "error ERC4626ExceededMaxRedeem(address owner, uint256 shares, uint256 max)",
+]);
+const withErrors = (abi: unknown) => {
+  const own = abi as Abi;
+  const names = new Set(own.map((item) => "name" in item && item.name));
+  return [...own, ...tokenErrors.filter((e) => !names.has(e.name))] as Abi;
+};
+export const poolAbi = withErrors(pool),
+  factoryAbi = withErrors(factory),
+  exchangeAbi = withErrors(exchange),
+  vaultAbi = withErrors(vault),
+  wrapperAbi = withErrors(wrapper),
+  tokenAbi = withErrors(token);
 export const oracleAbi = parseAbi(["function price() view returns(uint256)"]);
 export const read = async (
   address: Address,
