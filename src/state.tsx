@@ -7,7 +7,13 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { type Address, type Abi, type Hash, zeroAddress } from "viem";
+import {
+  type Address,
+  type Abi,
+  type Hash,
+  getAddress,
+  zeroAddress,
+} from "viem";
 import {
   client,
   config,
@@ -405,7 +411,46 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
       document.removeEventListener("visibilitychange", poll);
     };
   }, [refresh, account]);
+  // Remembers only that this browser chose to connect; addresses and keys are never stored.
+  const rememberConnection = (on: boolean) => {
+    try {
+      if (on) localStorage.setItem("alpine-wallet-connected", "1");
+      else localStorage.removeItem("alpine-wallet-connected");
+    } catch {
+      /* Without storage the wallet simply is not restored after a reload. */
+    }
+  };
+  useEffect(() => {
+    let remembered = false;
+    try {
+      remembered = localStorage.getItem("alpine-wallet-connected") === "1";
+    } catch {
+      /* Storage unavailable. */
+    }
+    const provider = walletProvider();
+    if (!remembered || !provider) return;
+    // eth_accounts and eth_chainId never prompt; restore only an already-authorized account on Fuji.
+    void Promise.all([
+      provider.request({ method: "eth_accounts" }) as Promise<Address[]>,
+      provider.request({ method: "eth_chainId" }) as Promise<string>,
+    ])
+      .then(([accounts, chainId]) => {
+        if (
+          !accounts?.[0] ||
+          Number(chainId) !== chain.id ||
+          currentAccount.current
+        )
+          return;
+        const restored = getAddress(accounts[0]);
+        generation.current++;
+        currentAccount.current = restored;
+        setAccount(restored);
+        setIdentity((x) => x + 1);
+      })
+      .catch(() => {});
+  }, []);
   function disconnect() {
+    rememberConnection(false);
     generation.current++;
     currentAccount.current = null;
     setAccount(null);
@@ -417,6 +462,7 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
   async function connect() {
     try {
       const result = await wallet();
+      rememberConnection(true);
       generation.current++;
       currentAccount.current = result.account;
       setAccount(result.account);

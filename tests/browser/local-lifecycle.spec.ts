@@ -43,10 +43,10 @@ test("local signed browser journey: faucet → provider → funded buy → prote
     { timeout: 30000 },
   );
   await page.goto("http://127.0.0.1:5184/provide?pool=wrapped");
-  await page
-    .getByRole("button", { name: "Connect wallet", exact: true })
-    .first()
-    .click();
+  // The authorized wallet is restored after a full page load without another prompt.
+  await expect(
+    page.getByRole("button", { name: "Connect wallet", exact: true }),
+  ).toHaveCount(0);
   await page.getByLabel("Amount", { exact: true }).fill("500");
   await page.getByRole("button", { name: "Review provision" }).click();
   await page.getByRole("button", { name: "Confirm capital provision" }).click();
