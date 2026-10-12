@@ -273,7 +273,7 @@ export function CreatePool() {
             items={[
               ["Approved protected assets", "AVAX · awAVAX · vaDEMO"],
               ["Approved backing", "aDEMO · bvaDEMO"],
-              ["Position cap", "100 lifetime positions per pool"],
+              ["Position cap", "100 open positions; 0.01 minimum entry claim"],
               ["Creator control", "Immutable terms; no seizure function"],
             ]}
           />

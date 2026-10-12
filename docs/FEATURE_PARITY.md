@@ -26,7 +26,7 @@ The asset set is native Fuji AVAX, the explicitly named Alpine test wrapper `awA
 - Partial exits realize fees on the exited slice and preserve the remaining position's original timing. This differs from whole-position fee crystallization and receipt reissue in other versions.
 - Pool creation requires 500 units of the selected backing as an initial provider deposit. This is credited to creator LP shares; it is not a listing fee or refundable factory bond.
 - A claim denominated in `bvaDEMO` fixes receipt units, not dollars. Vault redemption value can change. Activity is limited to transactions recorded in this browser, not a complete indexer.
-- The demo deliberately caps factory pools and lifetime positions per pool. Those bounds are shown in the interface and keep ownership discovery complete within the supported scope.
+- The demo deliberately caps factory pools and concurrently open positions per pool (100, each with at least a 0.01 backing-unit entry claim). Those bounds are shown in the interface and keep ownership discovery complete: pools publish their open position ids.
 
 ## Release boundary
 

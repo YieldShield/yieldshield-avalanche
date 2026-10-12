@@ -220,7 +220,7 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
               "juniorInventory",
               "totalShares",
               "maturity",
-              "nextPositionId",
+              "openPositionIds",
               "oracle",
               "terms",
             ];
@@ -233,7 +233,7 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
               inventory,
               totalShares,
               maturity,
-              next,
+              openIds,
               oracle,
               rawTerms,
             ] = values;
@@ -254,10 +254,10 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
             }
             const positions = (
               await Promise.all(
-                Array.from({ length: Number(next) - 1 }, (_, i) =>
-                  read(address, poolAbi, "positions", [BigInt(i + 1)]).then(
+                (openIds as bigint[]).map((id) =>
+                  read(address, poolAbi, "positions", [id]).then(
                     (p: any) => ({
-                      id: BigInt(i + 1),
+                      id,
                       owner: p[0],
                       amount: p[1],
                       floor: p[2],

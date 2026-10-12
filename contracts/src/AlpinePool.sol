@@ -5,6 +5,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 interface IAlpineOracle {
     function price() external view returns (uint256);
@@ -13,6 +14,7 @@ interface IAlpineOracle {
 /// @notice Bounded testnet split-risk market. Protected assets have18 decimals; backing has6.
 contract AlpinePool is ReentrancyGuard {
     using SafeERC20 for IERC20;
+    using EnumerableSet for EnumerableSet.UintSet;
 
     struct Terms {
         uint16 collateralBps;
@@ -38,7 +40,10 @@ contract AlpinePool is ReentrancyGuard {
     Terms public terms;
     uint256 public immutable maturity;
     uint256 public constant PROTOCOL_FEE_BPS = 100;
+    /// @notice Bound on concurrently open positions; closed positions free their slot.
     uint256 public constant MAX_POSITIONS = 100;
+    /// @notice Smallest entry floor (0.01 backing unit), so open slots cannot be filled with dust.
+    uint256 public constant MIN_FLOOR = 10_000;
     uint256 private constant RAY = 1e27;
     uint256 public totalBacking;
     uint256 public reservedBacking;
@@ -51,6 +56,7 @@ contract AlpinePool is ReentrancyGuard {
     uint256 public totalClaimableBacking;
     uint256 public nextPositionId = 1;
     mapping(uint256 => Position) public positions;
+    EnumerableSet.UintSet private openIds;
     mapping(address => uint256) public shares;
     mapping(address => uint256) public withdrawalReadyAt;
     mapping(address => uint256) public claimableBacking;
@@ -76,6 +82,7 @@ contract AlpinePool is ReentrancyGuard {
     error TransferFailed();
     error ActiveExposure();
     error EpochClosed();
+    error PositionLimit();
 
     constructor(
         address backing_,
@@ -113,6 +120,11 @@ contract AlpinePool is ReentrancyGuard {
 
     function requiredBacking(uint256 reserved) public view returns (uint256) {
         return Math.mulDiv(reserved, terms.collateralBps, 10000, Math.Rounding.Ceil);
+    }
+
+    /// @notice Ids of every open position (at most MAX_POSITIONS), for settlement and ownership discovery.
+    function openPositionIds() external view returns (uint256[] memory) {
+        return openIds.values();
     }
 
     function capacity() external view returns (uint256) {
@@ -258,13 +270,16 @@ contract AlpinePool is ReentrancyGuard {
     }
 
     function _protect(uint256 amount, uint256 minFloor, uint256 deadline) private returns (uint256 id) {
-        if (block.timestamp + terms.exitDelay >= maturity || nextPositionId > MAX_POSITIONS) revert EpochClosed();
+        if (block.timestamp + terms.exitDelay >= maturity) revert EpochClosed();
+        if (openIds.length() >= MAX_POSITIONS) revert PositionLimit();
         if (amount == 0 || amount > 100_000 ether) revert InvalidAmount();
         require(block.timestamp <= deadline, "DEADLINE");
         uint256 floor = Math.mulDiv(amount, oracle.price(), 1 ether);
-        if (floor == 0 || floor < minFloor) revert Slippage();
+        if (floor < MIN_FLOOR) revert InvalidAmount();
+        if (floor < minFloor) revert Slippage();
         if (totalBacking < requiredBacking(reservedBacking + floor)) revert InsufficientBacking();
         id = nextPositionId++;
+        openIds.add(id);
         positions[id] = Position(msg.sender, amount, floor, block.timestamp);
         reservedBacking += floor;
         protectedBalance += amount;
@@ -388,6 +403,7 @@ contract AlpinePool is ReentrancyGuard {
     function _reduce(uint256 id, Position memory p, uint256 amount, uint256 floorOut) private {
         if (amount == p.amount) {
             delete positions[id];
+            openIds.remove(id);
         } else {
             positions[id].amount = p.amount - amount;
             positions[id].floor = p.floor - floorOut;

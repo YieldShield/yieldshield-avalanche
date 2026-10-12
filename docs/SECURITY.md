@@ -6,7 +6,7 @@ This is unaudited testnet software. Asset-moving contracts accept only local cha
 
 - All protected assets use 18 decimals; both approved backing choices use 6 decimals. Addresses, oracle and term configuration are immutable.
 - Backing admission uses a ceil-rounded collateral requirement (default 150%, configurable 125–300%). Partial exits release only the corresponding proportional entry claim; rounding leaves the residual claim attached to the remaining asset.
-- Provider entry/redemption is frozen while any protected exposure remains. This closes an unrealized-shortfall NAV-arbitrage route. Epochs last 1–30 days, with 100 lifetime positions and a final-exit-delay admission cutoff.
+- Provider entry/redemption is frozen while any protected exposure remains. This closes an unrealized-shortfall NAV-arbitrage route. Epochs last 1–30 days, with at most 100 open positions (closed positions free their slot), a 0.01 backing-unit minimum entry claim so dust cannot occupy every slot, and a final-exit-delay admission cutoff.
 - Permissionless per-position expiry does not call the owner. It segregates a fixed backing credit outside provider NAV and reserves; the owner subsequently pulls that credit. Forced expiry forfeits remaining asset upside.
 - Protected principal, surrendered provider inventory, indexed provider fee inventory, creator/protocol fee inventory, and unclaimed backing are distinct liabilities. New provider deposits do not inherit old earned fees; provider redemption does not withdraw fee inventory.
 - Partial exits charge realized gains on the selected slice only. Ownership transfers preserve entry basis, opening time and maturity, and revoke the old owner's control.

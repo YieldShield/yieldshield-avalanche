@@ -82,6 +82,19 @@
   },
   {
     "type": "function",
+    "name": "MIN_FLOOR",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "PROTOCOL_FEE_BPS",
     "inputs": [],
     "outputs": [
@@ -361,6 +374,19 @@
         "name": "",
         "type": "uint256",
         "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "openPositionIds",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
       }
     ],
     "stateMutability": "view"
@@ -1244,6 +1270,11 @@
   {
     "type": "error",
     "name": "NotReady",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "PositionLimit",
     "inputs": []
   },
   {

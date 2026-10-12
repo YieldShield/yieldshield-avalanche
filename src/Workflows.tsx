@@ -125,10 +125,22 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
         const oracle = await read(market.address, poolAbi, "oracle");
         const price = await read(oracle, oracleAbi, "price");
         out = (n * price) / 10n ** 18n;
-        const capacity = await read(market.address, poolAbi, "capacity");
+        if (out < 10_000n)
+          throw new Error(
+            `The entry claim must be at least 0.01 ${market.backingSymbol}. Increase the amount.`,
+          );
+        const [capacity, openIds] = await Promise.all(
+          ["capacity", "openPositionIds"].map((name) =>
+            read(market.address!, poolAbi, name),
+          ),
+        );
         if (out > capacity)
           throw new Error(
             "Not enough unreserved backing for this entry claim.",
+          );
+        if ((openIds as bigint[]).length >= 100)
+          throw new Error(
+            "This market already has 100 open positions. Try again after one closes, or use another market.",
           );
       }
       if (out === 0n) throw new Error("Amount is too small.");
