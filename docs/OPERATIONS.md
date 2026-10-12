@@ -7,7 +7,7 @@ The owner selected **prepare deployment for later** on 11 October 2026. The dedi
 1. Build and verify the exact checkout: `npm ci --ignore-scripts`, `npm run test:contracts`, `npm test`, `npm run build`.
 2. `npm run deploy:fuji` performs read-only chain/balance preflight. It does not broadcast.
 3. After the owner resumes deployment and faucet funding is available, `npm run deploy:fuji -- --broadcast` executes the prepared plan. It requires at least 0.1 Fuji AVAX for gas and 0.02 AVAX of funded exchange inventory; actual total gas requirements may be higher.
-4. `npm run verify:fuji` checks chain 43113, deployed code, factory registration, asset and backing identities, configured terms, initial seed ownership and successful receipts before marking the manifest `deployed-and-verified`.
+4. `npm run verify:fuji` checks chain 43113, deployed code, factory registration, asset and backing identities, the featured terms recorded in the manifest, and successful receipts. It then marks the manifest `deployed-and-verified`. Creation seeds and exchange funding are checked from the recorded creation and funding receipts, not live balances, so verification can be repeated after public protections or trades. A `deploy:fuji -- --broadcast` rerun with nothing left to send keeps the current status. Only newly mined steps reset the status to `deployed-awaiting-verification`.
 5. Run a public wallet journey and save confirmed receipt/balance evidence before describing Fuji as end-to-end verified. Commit public registry/evidence separately, rebuild and deploy the website.
 
 The public manifest records mined successful operations (label, hash, nonce, block, gas). Scripts have no mainnet mode.

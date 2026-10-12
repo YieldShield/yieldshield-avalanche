@@ -10,6 +10,13 @@ export const terms = {
   exitDelay: 60,
   juniorNotice: 120,
 };
+/** Finite funded exchange inventory sent by the deployer. */
+export const exchangeInventory = {
+  cash: 1000_000000n,
+  wrapper: 10n ** 16n,
+  vault: 100n * 10n ** 18n,
+  native: 10n ** 16n,
+};
 /** Shared deployment plan; executor owns signing, receipts and durable progress. */
 export async function setupMarkets({
   manifest: m,
@@ -19,6 +26,8 @@ export async function setupMarkets({
   save,
   local = false,
 }) {
+  // Executors append to m.transactions only for newly mined steps.
+  const recordedBefore = m.transactions.length;
   const a = {
     token: artifact("DemoAssets", "AlpineDemoDollar"),
     scenario: artifact("DemoAssets", "AlpineScenarioOracle"),
@@ -94,6 +103,18 @@ export async function setupMarkets({
     ["vaultPool", m.vault, m.vaultOracle, m.backingToken],
     ["vaultBackingPool", zeroAddress, m.referenceOracle, m.backingVault],
   ];
+  if (pairs.some(([field]) => !m[field])) {
+    // The manifest describes the featured markets that exist, not the current plan.
+    if (
+      pairs.some(([field]) => m[field]) &&
+      JSON.stringify(m.defaultTerms) !== JSON.stringify(terms)
+    )
+      throw new Error(
+        "Some featured markets were created with different terms; start a new deployment instead of mixing terms.",
+      );
+    m.defaultTerms = terms;
+    await save();
+  }
   for (const [field, asset, oracle, backing] of pairs) {
     if (m[field]) continue;
     const receipt = await run(
@@ -127,27 +148,34 @@ export async function setupMarkets({
     m.backingToken,
     a.token.abi,
     "transfer",
-    [m.exchange, 1000_000000n],
+    [m.exchange, exchangeInventory.cash],
   );
   await run(
     "exchange-wrapper-inventory",
     m.wrapper,
     a.wrapper.abi,
     "transfer",
-    [m.exchange, 10n ** 16n],
+    [m.exchange, exchangeInventory.wrapper],
   );
   await run("exchange-vault-inventory", m.vault, a.vault.abi, "transfer", [
     m.exchange,
-    100n * 10n ** 18n,
+    exchangeInventory.vault,
   ]);
   await call("exchange-native-inventory", {
     to: m.exchange,
-    value: 10n ** 16n,
+    value: exchangeInventory.native,
   });
   // No holder positions are seeded: all featured pools allow new provider entry initially.
   m.version = 2;
-  m.status = local ? "local-only-verified" : "deployed-awaiting-verification";
-  m.defaultTerms = terms;
+  // A rerun that mined nothing new keeps the existing (possibly verified) status.
+  const deployed = local
+    ? "local-only-verified"
+    : "deployed-awaiting-verification";
+  if (
+    m.transactions.length > recordedBefore ||
+    ![deployed, "deployed-and-verified"].includes(m.status)
+  )
+    m.status = deployed;
   await save();
   return a;
 }

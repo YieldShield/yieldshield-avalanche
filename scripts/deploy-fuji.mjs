@@ -553,6 +553,7 @@ async function deploy(field, artifact, args = []) {
   save();
 }
 const { setupMarkets } = await import("./setup-markets.mjs");
+const recordedBefore = manifest.transactions.length;
 await setupMarkets({
   manifest,
   account: account.address,
@@ -564,6 +565,9 @@ if (retryLabel && !retried)
   console.log(
     `Note: --retry-reverted ${retryLabel} matched no reverted step in this run (an earlier run may already have retried it).`,
   );
+const mined = manifest.transactions.length - recordedBefore;
 console.log(
-  "Deployment mined. Run npm run verify:fuji before presenting the markets as verified.",
+  mined
+    ? `Deployment mined (${mined} new transaction(s)). Run npm run verify:fuji before presenting the markets as verified.`
+    : `Nothing to send: all ${manifest.transactions.length} steps were already recorded. Status remains ${manifest.status}.`,
 );
