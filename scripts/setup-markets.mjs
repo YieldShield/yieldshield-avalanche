@@ -1,7 +1,42 @@
-import { readFileSync } from "node:fs";
-import { decodeEventLog, zeroAddress } from "viem";
-export const artifact = (source, name = source) =>
-  JSON.parse(readFileSync(`contracts/out/${source}.sol/${name}.json`));
+import { existsSync, readFileSync } from "node:fs";
+import { decodeEventLog, keccak256, zeroAddress } from "viem";
+export const artifact = (source, name = source) => ({
+  ...JSON.parse(readFileSync(`contracts/out/${source}.sol/${name}.json`)),
+  id: `${source}.sol:${name}`,
+});
+/** Artifacts the plan deploys; the factory itself creates pools and backing oracles. */
+export const planArtifacts = (local = false) => ({
+  token: artifact("DemoAssets", "AlpineDemoDollar"),
+  scenario: artifact("DemoAssets", "AlpineScenarioOracle"),
+  reference: local
+    ? artifact("AlpinePool.t", "MutableOracle")
+    : artifact("DemoAssets", "AlpineChainlinkOracle"),
+  wrapper: artifact("AlpineMarket", "AlpineWrappedAVAX"),
+  vault: artifact("AlpineMarket", "AlpineDemoVault"),
+  backingVault: artifact("AlpineMarket", "AlpineBackingVault"),
+  vaultOracle: artifact("AlpineMarket", "AlpineVaultOracle"),
+  factory: artifact("AlpineMarket", "AlpineFactory"),
+  exchange: artifact("AlpineMarket", "AlpineExchange"),
+  pool: artifact("AlpinePool"),
+  backingOracle: artifact("AlpineMarket", "AlpineBackingOracle"),
+});
+/** Bytecode hashes, plus source files that differ from what the artifacts were compiled from. */
+export function artifactProvenance(artifacts) {
+  const hashes = {},
+    stale = new Set();
+  for (const a of Object.values(artifacts)) {
+    hashes[a.id] = {
+      bytecode: keccak256(a.bytecode.object),
+      deployedBytecode: keccak256(a.deployedBytecode.object),
+    };
+    for (const [path, source] of Object.entries(a.metadata?.sources ?? {})) {
+      const file = `contracts/${path}`;
+      if (!existsSync(file) || keccak256(readFileSync(file)) !== source.keccak256)
+        stale.add(file);
+    }
+  }
+  return { hashes, stale: [...stale].sort() };
+}
 export const terms = {
   collateralBps: 15000,
   juniorFeeBps: 1000,
@@ -28,20 +63,7 @@ export async function setupMarkets({
 }) {
   // Executors append to m.transactions only for newly mined steps.
   const recordedBefore = m.transactions.length;
-  const a = {
-    token: artifact("DemoAssets", "AlpineDemoDollar"),
-    scenario: artifact("DemoAssets", "AlpineScenarioOracle"),
-    reference: local
-      ? artifact("AlpinePool.t", "MutableOracle")
-      : artifact("DemoAssets", "AlpineChainlinkOracle"),
-    wrapper: artifact("AlpineMarket", "AlpineWrappedAVAX"),
-    vault: artifact("AlpineMarket", "AlpineDemoVault"),
-    backingVault: artifact("AlpineMarket", "AlpineBackingVault"),
-    vaultOracle: artifact("AlpineMarket", "AlpineVaultOracle"),
-    factory: artifact("AlpineMarket", "AlpineFactory"),
-    exchange: artifact("AlpineMarket", "AlpineExchange"),
-    pool: artifact("AlpinePool"),
-  };
+  const a = planArtifacts(local);
   await deploy("backingToken", a.token);
   await deploy("scenarioOracle", a.scenario);
   await deploy(

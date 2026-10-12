@@ -7,6 +7,7 @@ import {
   renameSync,
 } from "node:fs";
 import { randomBytes } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import {
   createPublicClient,
   createWalletClient,
@@ -22,6 +23,11 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import { avalancheFuji } from "viem/chains";
 import { fileURLToPath } from "node:url";
+import {
+  artifactProvenance,
+  planArtifacts,
+  setupMarkets,
+} from "./setup-markets.mjs";
 const root = fileURLToPath(new URL("../", import.meta.url));
 process.chdir(root);
 const argv = process.argv.slice(2);
@@ -77,6 +83,38 @@ const { privateKey } = JSON.parse(readFileSync(secretPath));
 const account = privateKeyToAccount(privateKey);
 if (account.address.toLowerCase() !== manifest.deployer.toLowerCase())
   throw new Error("Unexpected test signer");
+if (!existsSync("contracts/out"))
+  throw new Error("Build the contracts first: npm run test:contracts");
+const artifacts = planArtifacts();
+const provenance = artifactProvenance(artifacts);
+const git = (...args) =>
+  execFileSync("git", args, {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+  });
+let commit = null,
+  uncommitted = [];
+try {
+  commit = git("rev-parse", "HEAD").trim();
+  uncommitted = git(
+    "status",
+    "--porcelain",
+    "--",
+    "contracts/src",
+    "contracts/foundry.toml",
+    "scripts",
+  )
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => line.slice(3));
+} catch {}
+const changedArtifacts = manifest.source
+  ? Object.keys(provenance.hashes).filter(
+      (id) =>
+        JSON.stringify(manifest.source.artifacts?.[id]) !==
+        JSON.stringify(provenance.hashes[id]),
+    )
+  : [];
 const intentsRoot = ".secrets/transactions";
 const legacyIntents = existsSync(intentsRoot)
   ? readdirSync(intentsRoot).filter((name) => name.endsWith(".json"))
@@ -89,9 +127,22 @@ console.log(
     balanceWei: String(balance),
     deploymentId: manifest.deploymentId ?? null,
     recordedTransactions: manifest.transactions.length,
+    commit,
+    uncommitted,
+    staleSources: provenance.stale.length,
     broadcast,
   }),
 );
+if (provenance.stale.length)
+  console.log(
+    `contracts/out was not compiled from the current sources (${provenance.stale.join(", ")}). Rebuild with npm run test:contracts before broadcasting.`,
+  );
+if (uncommitted.length)
+  console.log(`Uncommitted deployment inputs: ${uncommitted.join(", ")}`);
+if (changedArtifacts.length)
+  console.log(
+    `These artifacts differ from the build deployment ${manifest.deploymentId} started with (commit ${manifest.source.commit}): ${changedArtifacts.join(", ")}`,
+  );
 if (legacyIntents.length)
   console.log(
     `Ignoring ${legacyIntents.length} unbound intent file(s) written by an older script directly in ${intentsRoot}/. They are never reused; check on the explorer that none is pending before archiving them.`,
@@ -106,11 +157,40 @@ if (balance < 10n ** 17n)
   throw new Error(
     "Need at least 0.1 faucet-funded Fuji AVAX for gas plus 0.02 test AVAX exchange inventory. No real-money funding is permitted.",
   );
+if (provenance.stale.length)
+  throw new Error(
+    "Refusing to broadcast artifacts that do not match the current sources.",
+  );
+if (!commit)
+  throw new Error(
+    "Cannot read the git commit; deploy from a git checkout so the manifest records its source.",
+  );
+if (uncommitted.some((path) => path.startsWith("contracts/")))
+  throw new Error(
+    "Commit contract changes before broadcasting so the recorded commit reproduces the bytecode.",
+  );
 const w = createWalletClient({
   account,
   chain: avalancheFuji,
   transport: http(manifest.rpcUrl),
 });
+const source = {
+  commit,
+  uncommitted,
+  compiler: artifacts.pool.metadata?.compiler?.version ?? null,
+  artifacts: provenance.hashes,
+};
+if (manifest.deploymentId && !manifest.source) {
+  manifest.source = source;
+  save();
+} else if (manifest.deploymentId && changedArtifacts.length)
+  throw new Error(
+    `Check out commit ${manifest.source.commit} and rebuild to resume deployment ${manifest.deploymentId}, or start over (docs/OPERATIONS.md, "Starting over"). Nothing was sent.`,
+  );
+else if (manifest.deploymentId && manifest.source.commit !== commit)
+  console.log(
+    `Resuming deployment ${manifest.deploymentId} (started at ${manifest.source.commit}) from ${commit}; its artifacts are identical.`,
+  );
 if (!manifest.deploymentId) {
   if (
     manifest.transactions.length ||
@@ -121,6 +201,7 @@ if (!manifest.deploymentId) {
     );
   manifest.deploymentId = `fuji-${new Date().toISOString().slice(0, 19).replace(/:/g, "-")}Z-${randomBytes(3).toString("hex")}`;
   manifest.failedTransactions = [];
+  manifest.source = source;
   save();
   console.log(
     `Started deployment ${manifest.deploymentId}; its signed intents live in ${intentsRoot}/${manifest.deploymentId}/.`,
@@ -552,7 +633,6 @@ async function deploy(field, artifact, args = []) {
   manifest[field] = receipt.contractAddress;
   save();
 }
-const { setupMarkets } = await import("./setup-markets.mjs");
 const recordedBefore = manifest.transactions.length;
 await setupMarkets({
   manifest,
