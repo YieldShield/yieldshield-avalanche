@@ -656,6 +656,7 @@ export function PositionDetail() {
               <div className="tabs">
                 {(["asset", "backing", "transfer"] as const).map((v) => (
                   <button
+                    aria-pressed={mode === v}
                     className={mode === v ? "active" : ""}
                     key={v}
                     onClick={() => setMode(v)}
