@@ -12,6 +12,7 @@ import {
   exchangeInventory,
   planArtifacts,
   terms,
+  vaultSeed,
 } from "./setup-markets.mjs";
 const m = JSON.parse(readFileSync("config/deployment.json"));
 if (m.chainId !== 43113 || m.version !== 2)
@@ -245,6 +246,26 @@ for (const field of ["vault", "backingVault"])
     m.backingToken.toLowerCase()
   )
     throw new Error("Wrong vault underlying");
+// Seed deposits must have minted exactly 10^(vault decimals - 6) shares per aDEMO.
+for (const [field, label] of [
+  ["vault", "vault-funded-deposit"],
+  ["backingVault", "backing-vault-funded-deposit"],
+]) {
+  const offset = BigInt(await read(m[field], vault, "decimals")) - 6n;
+  const deposits = eventsFrom(
+    await recordedReceipt(label),
+    m[field],
+    vault,
+    "Deposit",
+  );
+  if (
+    deposits.length !== 1 ||
+    !same(deposits[0].args.owner, m.deployer) ||
+    deposits[0].args.assets !== vaultSeed ||
+    deposits[0].args.shares !== vaultSeed * 10n ** offset
+  )
+    throw new Error(`${field} seed deposit did not mint exact 1:1 shares`);
+}
 const tokenAbi = artifacts.token.abi,
   exchangeAbi = artifacts.exchange.abi;
 for (const [field, decimals, symbol] of [
@@ -316,5 +337,5 @@ m.status = "deployed-and-verified";
 m.verifiedAt = new Date().toISOString();
 writeFileSync("config/deployment.json", JSON.stringify(m, null, 2) + "\n");
 console.log(
-  `Verified Fuji runtime code (immutables masked) against contracts/out, factory and oracle wiring, exact asset identities, terms, open epochs, creation seeds, exchange funding and all deployment receipts${m.source?.commit ? ` for source ${m.source.commit}` : ""}.`,
+  `Verified Fuji runtime code (immutables masked) against contracts/out, factory and oracle wiring, exact asset identities, terms, open epochs, vault and creation seeds, exchange funding and all deployment receipts${m.source?.commit ? ` for source ${m.source.commit}` : ""}.`,
 );

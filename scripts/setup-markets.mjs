@@ -45,6 +45,8 @@ export const terms = {
   exitDelay: 60,
   juniorNotice: 120,
 };
+/** aDEMO the deployer deposits into each vault before creating markets. */
+export const vaultSeed = 1000_000000n;
 /** Finite funded exchange inventory sent by the deployer. */
 export const exchangeInventory = {
   cash: 1000_000000n,
@@ -89,18 +91,26 @@ export async function setupMarkets({
   const run = async (label, address, abi, functionName, args = [], value) =>
     call(label, { address, abi, functionName, args, value });
   await run("seed-faucet", m.backingToken, a.token.abi, "faucet");
-  for (const [label, address, amount] of [
-    ["vault", m.vault, 1000_000000n],
-    ["backing-vault", m.backingVault, 1000_000000n],
+  const deadline = () => BigInt(Math.floor(Date.now() / 1000) + 86400);
+  // ERC-4626 mints assets * (supply + 10^offset) / (held assets + 1) shares, exactly
+  // assets * 10^offset unless aDEMO was donated to the vault first. Requiring that amount
+  // stops a donation front-run from minting the seed as dust: with bvaDEMO's offset 0,
+  // deposit(1) + donate(1000e6) would leave the deployer 1 share and no market seed.
+  for (const [label, address, offset] of [
+    ["vault", m.vault, 12n],
+    ["backing-vault", m.backingVault, 0n],
   ]) {
     await run(`${label}-approve`, m.backingToken, a.token.abi, "approve", [
       address,
-      amount,
+      vaultSeed,
     ]);
-    await run(`${label}-funded-deposit`, address, a.vault.abi, "deposit", [
-      amount,
-      account,
-    ]);
+    await run(
+      `${label}-funded-deposit`,
+      address,
+      a.vault.abi,
+      "depositBounded",
+      [vaultSeed, account, vaultSeed * 10n ** offset, deadline()],
+    );
   }
   await run(
     "wrapper-funded-deposit",
@@ -149,7 +159,7 @@ export async function setupMarkets({
         oracle,
         backing,
         terms,
-        BigInt(Math.floor(Date.now() / 1000) + 86400),
+        deadline(),
       ],
     );
     for (const log of receipt.logs) {
