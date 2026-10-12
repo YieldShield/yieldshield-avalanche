@@ -34,7 +34,11 @@ export function Trade() {
   const [params, setParams] = useSearchParams();
   const { account, identity, balances, approve, transact, markets } =
     useAlpine();
-  const assetKey = params.get("asset") || "native";
+  // Only known assets are honoured; an unknown query value must not trade a different asset than shown.
+  const requestedAsset = params.get("asset");
+  const assetKey = assets.some((a) => a.key === requestedAsset)
+    ? requestedAsset!
+    : "native";
   const side = params.get("side") === "sell" ? "sell" : "buy";
   const amount =
     params.get("tradeAmount") ??
@@ -374,10 +378,19 @@ export function Trade() {
     </>
   );
 }
+const conversionKinds = [
+  "wrap",
+  "unwrap",
+  "deposit",
+  "redeem",
+  "deposit-backing",
+  "redeem-backing",
+];
 export function Conversions() {
   const [params, setParams] = useSearchParams();
   const { account, identity, balances, approve, transact } = useAlpine();
-  const kind = params.get("convert") || "wrap";
+  const requestedKind = params.get("convert") || "";
+  const kind = conversionKinds.includes(requestedKind) ? requestedKind : "wrap";
   const amount =
     params.get("convertAmount") ??
     (params.get("return") === "provide" ? params.get("amount") || "" : "");
