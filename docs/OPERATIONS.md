@@ -10,7 +10,23 @@ The owner selected **prepare deployment for later** on 11 October 2026. The dedi
 4. `npm run verify:fuji` checks chain 43113, deployed code, factory registration, asset and backing identities, configured terms, initial seed ownership and successful receipts before marking the manifest `deployed-and-verified`.
 5. Run a public wallet journey and save confirmed receipt/balance evidence before describing Fuji as end-to-end verified. Commit public registry/evidence separately, rebuild and deploy the website.
 
-Each signed intent is privately saved before send. Interrupted deployment reuses the identical signed transaction/hash. Never delete an ambiguous intent or casually replace a nonce. The public manifest records mined successful operations. Scripts have no mainnet mode.
+The public manifest records mined successful operations (label, hash, nonce, block, gas). Scripts have no mainnet mode.
+
+### Signed intents and resuming
+
+The first broadcast gives the manifest a `deploymentId`. Every transaction is signed and saved privately as an intent in `.secrets/transactions/<deploymentId>/<label>.json` (mode 600) before it is sent. Each intent is bound to chain 43113, the signer, its nonce, the hash of target, value and calldata and, for contract creations, the artifact bytecode hash. A `deadline` argument is chosen at signing time (chain time plus one hour) and excluded from the payload hash. A rerun refuses any stored intent that does not match the current step exactly, explaining the mismatch and where the intent stands on chain.
+
+A rerun resumes each stored intent according to its chain state:
+
+- **Mined successfully:** recorded, unless the signer has sent later transactions, which marks the intent as left over from an earlier attempt.
+- **Pending:** waited for; it is never replaced.
+- **Unknown to the node with its nonce still unused:** rebroadcast unchanged. It is re-signed at the same nonce only if its deadline is within five minutes of chain time or the node rejects it. The script logs the re-signing, and the superseded hash remains watched.
+- **Mined but reverted:** recorded under `failedTransactions`, and the run stops. Inspect the revert, fix its cause, then run `npm run deploy:fuji -- --broadcast --retry-reverted <label>`. The step is signed again at the next nonce, and the reverted intent is kept as `<label>.reverted-nonce-<n>.json`.
+- **Nonce consumed by another transaction:** the run stops.
+
+Never delete or edit an intent that may be pending or mined, never casually replace a nonce, and do not send other transactions from the test signer during a deployment.
+
+**Starting over** (for example after contract changes): restore the pre-deployment manifest with every contract field `null`, `transactions: []`, and no `deploymentId` or `failedTransactions`, for example `git checkout <pre-deployment commit> -- config/deployment.json`. The next broadcast creates a new deployment folder, so old intents are never consulted. An emptied manifest that keeps the old `deploymentId` stops at the first intent that already mined.
 
 ## Version 2 deployment plan
 
