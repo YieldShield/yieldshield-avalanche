@@ -6,7 +6,7 @@ const routes: [string, string][] = [
   ["/provide", "Put your capital to work."],
   ["/trade", "Trade. Then protect."],
   ["/positions", "My positions."],
-  ["/portfolio", "Portfolio, by asset."],
+  ["/portfolio", "Wallet balances."],
   ["/activity", "Activity."],
   ["/create-pool", "Set the terms. Supply the seed."],
   ["/faucet", "Get ready for the route."],

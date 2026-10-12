@@ -27,7 +27,7 @@ test("denied browser storage does not prevent rendering", async ({ page }) => {
   });
   await page.goto("/portfolio");
   await expect(
-    page.getByRole("heading", { name: "Portfolio, by asset." }),
+    page.getByRole("heading", { name: "Wallet balances." }),
   ).toBeVisible();
 });
 test("wallet account and network changes clear the connected session", async ({

@@ -53,7 +53,10 @@ test("local signed browser journey: faucet → provider → funded buy → prote
   await expect(
     page.getByRole("heading", { name: "Capital provided." }),
   ).toBeVisible({ timeout: 30000 });
-  await page.getByRole("link", { name: "Trade & convert" }).click();
+  await page
+    .getByRole("navigation", { name: "Main navigation" })
+    .getByRole("link", { name: "Trade", exact: true })
+    .click();
   await page.getByLabel("Asset", { exact: true }).selectOption("wrapped");
   await page.getByLabel("Amount", { exact: true }).fill("0.001");
   await page.getByRole("button", { name: "Review trade", exact: true }).click();
@@ -93,7 +96,10 @@ test("local signed browser journey: faucet → provider → funded buy → prote
     "Partial asset exit confirmed.",
     { timeout: 30000 },
   );
-  await page.getByRole("link", { name: "My positions", exact: true }).click();
+  await page
+    .getByRole("navigation", { name: "Main navigation" })
+    .getByRole("link", { name: "Portfolio", exact: true })
+    .click();
   await page
     .getByRole("button", { name: "Claim earned fees", exact: true })
     .click();
@@ -101,11 +107,17 @@ test("local signed browser journey: faucet → provider → funded buy → prote
     "Claim provider rewards confirmed.",
     { timeout: 30000 },
   );
-  await page.getByRole("link", { name: "Activity", exact: true }).click();
+  await page
+    .getByRole("navigation", { name: "Portfolio navigation" })
+    .getByRole("link", { name: "Activity", exact: true })
+    .click();
   await expect(
     page.getByRole("heading", { name: "Claim provider rewards", exact: true }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Portfolio", exact: true }).click();
+  await page
+    .getByRole("navigation", { name: "Portfolio navigation" })
+    .getByRole("link", { name: "Balances", exact: true })
+    .click();
   await page.getByRole("button", { name: /Disconnect/ }).click();
   await expect(
     page.getByRole("heading", { name: "Connect your wallet" }),
@@ -173,7 +185,7 @@ test("an in-flight quote cannot revive a previous asset review", async ({
   await arrived;
   await page.getByLabel("Asset", { exact: true }).selectOption("vault");
   release();
-  await expect(page.getByRole("alert")).toContainText("changed. Review again.");
+  await expect(page.getByRole("alert")).toContainText("Review again.");
   await expect(page.getByRole("button", { name: "Confirm buy" })).toHaveCount(
     0,
   );
