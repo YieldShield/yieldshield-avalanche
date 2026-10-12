@@ -12,6 +12,7 @@ import {
   client,
   config,
   chain,
+  localMode,
   read,
   wallet,
   walletProvider,
@@ -122,11 +123,14 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
     readsInFlight = useRef(0);
   const generation = useRef(0),
     currentAccount = useRef<Address | null>(null);
+  // Production writes require a verified Fuji manifest; only the dev-only local mode accepts local evidence.
   const ready = Boolean(
     config.factory &&
     config.referencePool &&
     config.backingToken &&
-    ["deployed-and-verified", "local-only-verified"].includes(config.status),
+    config.chainId === chain.id &&
+    config.status ===
+      (localMode ? "local-only-verified" : "deployed-and-verified"),
   );
   useEffect(() => {
     try {
