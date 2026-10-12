@@ -37,11 +37,15 @@ export function artifactProvenance(artifacts) {
   }
   return { hashes, stale: [...stale].sort() };
 }
+/**
+ * Featured market terms. Epochs are fixed and never renewed, so featured markets use the
+ * 30-day contract maximum (AlpinePool EPOCH_LIMIT) to stay open as long as possible.
+ */
 export const terms = {
   collateralBps: 15000,
   juniorFeeBps: 1000,
   creatorFeeBps: 100,
-  epochSeconds: 604800,
+  epochSeconds: 2592000,
   exitDelay: 60,
   juniorNotice: 120,
 };
