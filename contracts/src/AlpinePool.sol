@@ -66,6 +66,7 @@ contract AlpinePool is ReentrancyGuard {
     event PositionTransferred(uint256 indexed id, address indexed from, address indexed to);
     event Protected(uint256 indexed id, address indexed owner, uint256 amount, uint256 floor);
     event Exited(uint256 indexed id, address indexed owner, bool backingExit, uint256 amount, uint256 received);
+    event GainFeesCharged(uint256 indexed id, uint256 providerReward, uint256 creatorFee, uint256 protocolFee);
     event Expired(uint256 indexed id, address indexed owner, uint256 backingCredited);
     event BackingClaimed(address indexed owner, uint256 amount);
     event JuniorDeposited(address indexed owner, uint256 backingAmount, uint256 sharesMinted);
@@ -345,6 +346,7 @@ contract AlpinePool is ReentrancyGuard {
         claimableFees[protocol] += protocolFee;
         otherFeeInventory += creatorFee + protocolFee;
         _sendAsset(msg.sender, out);
+        if (reward + creatorFee + protocolFee > 0) emit GainFeesCharged(id, reward, creatorFee, protocolFee);
         emit Exited(id, msg.sender, false, amount, out);
     }
 

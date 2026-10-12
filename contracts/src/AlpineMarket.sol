@@ -222,16 +222,21 @@ contract AlpineExchange is ReentrancyGuard {
     event Traded(
         address indexed owner, address indexed asset, bool buy, uint256 amount, uint256 backingAmount, uint256 fee
     );
+    /// @notice Inventory added to the exchange (asset zero is native AVAX).
+    event InventoryFunded(address indexed asset, address indexed from, uint256 amount);
 
     constructor(IERC20 backing_, AlpineFactory registry_) {
         require(block.chainid == 43113 || block.chainid == 31337, "TESTNET_ONLY");
         backing = backing_;
         registry = registry_;
     }
-    receive() external payable {}
+    receive() external payable {
+        emit InventoryFunded(address(0), msg.sender, msg.value);
+    }
 
     function fundToken(address token, uint256 amount) external {
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+        emit InventoryFunded(token, msg.sender, amount);
     }
 
     function oracle(address asset) public view returns (address) {
