@@ -14,6 +14,7 @@ import {
   chain,
   localMode,
   read,
+  short,
   wallet,
   walletProvider,
   poolAbi,
@@ -197,24 +198,51 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
             (m) => m.address?.toLowerCase() === address.toLowerCase(),
           ),
       );
-      const details = await Promise.all(
-        community.map((address) =>
-          Promise.all(
-            ["protectedToken", "backing", "oracle"].map((n) =>
-              read(address, poolAbi, n),
+      // Community pools are priced by an approved oracle or its bvaDEMO-unit adapter; name the source
+      // so a synthetic scenario pool cannot pass for a Chainlink-priced one.
+      const sources: [Address | null, string][] = [
+        [config.referenceOracle, "Chainlink AVAX/USD"],
+        [config.scenarioOracle, "Synthetic 25 → 35 → 15 cycle"],
+        [config.vaultOracle, "Vault redemption backing"],
+      ];
+      const [details, adapters] = await Promise.all([
+        Promise.all(
+          community.map((address) =>
+            Promise.all(
+              ["protectedToken", "backing", "oracle"].map((n) =>
+                read(address, poolAbi, n),
+              ),
             ),
           ),
         ),
-      );
+        community.length
+          ? Promise.all(
+              sources.map(([oracle]) =>
+                oracle
+                  ? read(config.factory, factoryAbi, "backingOracles", [
+                      oracle,
+                    ]).catch(() => null)
+                  : null,
+              ),
+            )
+          : [],
+      ]);
+      const sourceOf = (oracle: Address) =>
+        sources.findIndex(([direct], i) =>
+          [direct, adapters[i]].some(
+            (o) => o?.toLowerCase() === oracle.toLowerCase(),
+          ),
+        );
       community.forEach((address, i) => {
         const [asset, backing, oracle] = details[i];
         const item = assets.find(
           (a) => a.address?.toLowerCase() === asset.toLowerCase(),
         );
         if (!item) return;
+        const source = sourceOf(oracle);
         catalog.push({
           key: address,
-          name: `Community ${item.symbol}`,
+          name: `${source === 1 ? "Scenario" : "Community"} ${item.symbol} · ${short(address)}`,
           asset: item.key,
           address,
           backing,
@@ -223,7 +251,7 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
               ? "bvaDEMO"
               : "aDEMO",
           oracle,
-          source: "Factory-approved oracle",
+          source: source < 0 ? "Factory-approved oracle" : sources[source][1],
         });
       });
     } catch (e) {
