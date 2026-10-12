@@ -5,7 +5,10 @@ import { useAlpine } from "./state";
 export function useMarket() {
   const a = useAlpine();
   const [params, setParams] = useSearchParams();
-  const key = params.get("pool") || "reference";
+  const key =
+    params.get("pool") ||
+    a.markets.find((m) => a.snapshots[m.key]?.protectOpen)?.key ||
+    "reference";
   const market = a.markets.find(
     (m) => m.key.toLowerCase() === key.toLowerCase(),
   );
@@ -60,7 +63,7 @@ export function PageTitle({
   );
 }
 export function MarketSelect() {
-  const { market, markets, select } = useMarket();
+  const { market, markets, select, snapshots } = useMarket();
   return (
     <label className="field-label">
       Choose a market
@@ -72,6 +75,9 @@ export function MarketSelect() {
         {markets.map((m) => (
           <option key={m.key} value={m.key}>
             {m.name} / {m.backingSymbol}
+            {snapshots[m.key] && !snapshots[m.key].provideOpen
+              ? " · matured"
+              : ""}
           </option>
         ))}
       </select>
@@ -238,7 +244,9 @@ export function MarketCard({
         </div>
         <span className="test-pill">
           {s
-            ? "TESTNET"
+            ? s.provideOpen
+              ? "TESTNET"
+              : "MATURED"
             : errors[market.key]
               ? "READ FAILED"
               : market.address
@@ -260,7 +268,9 @@ export function MarketCard({
           [
             "Available entry claims",
             s
-              ? `${fmt(s.capacity)} ${market.backingSymbol}`
+              ? s.protectOpen
+                ? `${fmt(s.capacity)} ${market.backingSymbol}`
+                : "Closed · epoch ending"
               : ready || market.address
                 ? loading
                   ? "Loading…"
@@ -270,9 +280,11 @@ export function MarketCard({
           [
             "Provider entry",
             s
-              ? s.reserved > 0n
-                ? "Frozen · open protection"
-                : "Available until maturity"
+              ? !s.provideOpen
+                ? "Closed · matured"
+                : s.reserved > 0n
+                  ? "Frozen · open protection"
+                  : "Available until maturity"
               : ready || market.address
                 ? "Unavailable"
                 : "Prepared",
@@ -286,18 +298,22 @@ export function MarketCard({
         >
           Market details ↗
         </RouteLink>
-        <RouteLink
-          className="secondary-button"
-          to={`/protect?pool=${market.key}`}
-        >
-          Protect
-        </RouteLink>
-        <RouteLink
-          className="secondary-button"
-          to={`/provide?pool=${market.key}`}
-        >
-          Provide capital
-        </RouteLink>
+        {(!s || s.protectOpen) && (
+          <RouteLink
+            className="secondary-button"
+            to={`/protect?pool=${market.key}`}
+          >
+            Protect
+          </RouteLink>
+        )}
+        {(!s || s.provideOpen) && (
+          <RouteLink
+            className="secondary-button"
+            to={`/provide?pool=${market.key}`}
+          >
+            Provide capital
+          </RouteLink>
+        )}
       </div>
     </article>
   );

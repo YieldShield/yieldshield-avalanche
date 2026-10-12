@@ -241,6 +241,13 @@ export function RoleFlow({ role }: { role: "protect" | "provide" }) {
             <span>→ 03 Position</span>
           </div>
           <MarketSelect />
+          {s && !(provider ? s.provideOpen : s.protectOpen) && (
+            <p className="error-note" role="status">
+              This market's epoch has ended for new{" "}
+              {provider ? "capital" : "protection"}. Choose an open market or{" "}
+              <RouteLink to="/create-pool">create a fresh one</RouteLink>.
+            </p>
+          )}
           {success ? (
             <div className="success-panel">
               <h2>{provider ? "Capital provided." : "Protection opened."}</h2>

@@ -48,6 +48,10 @@ export type Snapshot = {
   capacity: bigint;
   nav: bigint | null;
   maturity: bigint;
+  /** New protection is admitted only while chain time + exit delay is before maturity. */
+  protectOpen: boolean;
+  /** Provider entry is admitted only before maturity (and while no exposure is open). */
+  provideOpen: boolean;
   positions: Position[];
   terms: typeof DEFAULT_TERMS;
 };
@@ -255,15 +259,13 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
             const positions = (
               await Promise.all(
                 (openIds as bigint[]).map((id) =>
-                  read(address, poolAbi, "positions", [id]).then(
-                    (p: any) => ({
-                      id,
-                      owner: p[0],
-                      amount: p[1],
-                      floor: p[2],
-                      openedAt: p[3],
-                    }),
-                  ),
+                  read(address, poolAbi, "positions", [id]).then((p: any) => ({
+                    id,
+                    owner: p[0],
+                    amount: p[1],
+                    floor: p[2],
+                    openedAt: p[3],
+                  })),
                 ),
               )
             ).filter((p) => p.owner !== zeroAddress);
@@ -284,6 +286,11 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
               inventory,
               totalShares,
               maturity,
+              // An unreadable clock (0) never marks a market closed; the contract still enforces it.
+              protectOpen:
+                blockTime === 0n ||
+                blockTime + BigInt(terms.exitDelay) < maturity,
+              provideOpen: blockTime === 0n || blockTime < maturity,
               positions,
               price,
               oracleError,
