@@ -61,6 +61,9 @@ export function Trade() {
     [success, setSuccess] = useState<string | null>(null),
     [working, setWorking] = useState(false);
   const asset = assets.find((a) => a.key === assetKey) || assets[0];
+  // Quick amounts stay within the seeded exchange inventory (0.01 AVAX / awAVAX, 100 vaDEMO).
+  const presets =
+    assetKey === "vault" ? ["1", "10", "50"] : ["0.001", "0.005", "0.01"];
   const guard = useReviewGuard([assetKey, side, amount, identity]);
   useEffect(() => {
     setQ(null);
@@ -269,7 +272,7 @@ export function Trade() {
                 }
               />
               <div className="button-row">
-                {["0.1", "1", "5"].map((n) => (
+                {presets.map((n) => (
                   <button
                     className="secondary-button"
                     key={n}
