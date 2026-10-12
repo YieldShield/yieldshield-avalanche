@@ -16,7 +16,11 @@ import {
   toHex,
   encodeDeployData,
   encodeFunctionData,
+  formatEther,
+  formatGwei,
+  formatUnits,
   getAbiItem,
+  parseAbi,
   parseTransaction,
   recoverTransactionAddress,
 } from "viem";
@@ -25,6 +29,7 @@ import { avalancheFuji } from "viem/chains";
 import { fileURLToPath } from "node:url";
 import {
   artifactProvenance,
+  exchangeInventory,
   planArtifacts,
   setupMarkets,
 } from "./setup-markets.mjs";
@@ -42,6 +47,14 @@ if (retryLabel && !broadcast)
 const DEADLINE_WINDOW = 3600n;
 /** An unsent intent this close to its deadline is re-signed instead of rebroadcast. */
 const DEADLINE_MARGIN = 300n;
+/**
+ * Sum of the gas limits of all 26 plan steps (24.49M; 24.25M used), measured by a full
+ * broadcast against a chain-43113 Anvil. Remeasure when contracts or the plan change.
+ */
+const PLAN_GAS = 24_500_000n;
+const GAS_HEADROOM_PERCENT = 130n;
+/** Markets whose creation reads the Chainlink-backed reference oracle. */
+const REFERENCE_MARKETS = ["referencePool", "wrappedPool", "vaultBackingPool"];
 const POLL_MS = 1500;
 const WAIT_TIMEOUT_MS = 10 * 60 * 1000;
 const CONTRACT_FIELDS = [
@@ -120,11 +133,28 @@ const legacyIntents = existsSync(intentsRoot)
   ? readdirSync(intentsRoot).filter((name) => name.endsWith(".json"))
   : [];
 const balance = await c.getBalance({ address: account.address });
+// Funding for the steps not yet recorded: gas at today's max fee with 30% headroom, plus the
+// native AVAX the plan sends (awAVAX deposit and exchange inventory).
+const recordedLabels = new Set(manifest.transactions.map((t) => t.label));
+const usedGas = manifest.transactions.reduce(
+  (sum, t) => sum + BigInt(t.gasUsed ?? 0),
+  0n,
+);
+const remainingGas = usedGas < PLAN_GAS ? PLAN_GAS - usedGas : 0n;
+const remainingValue =
+  (recordedLabels.has("wrapper-funded-deposit") ? 0n : exchangeInventory.wrapper) +
+  (recordedLabels.has("exchange-native-inventory")
+    ? 0n
+    : exchangeInventory.native);
+const { maxFeePerGas } = await c.estimateFeesPerGas();
+const gasCost = (maxFeePerGas * remainingGas * GAS_HEADROOM_PERCENT) / 100n;
+const required = gasCost + remainingValue;
 console.log(
   JSON.stringify({
     chainId: 43113,
     deployer: account.address,
     balanceWei: String(balance),
+    requiredWei: String(required),
     deploymentId: manifest.deploymentId ?? null,
     recordedTransactions: manifest.transactions.length,
     commit,
@@ -133,41 +163,88 @@ console.log(
     broadcast,
   }),
 );
-if (provenance.stale.length)
-  console.log(
-    `contracts/out was not compiled from the current sources (${provenance.stale.join(", ")}). Rebuild with npm run test:contracts before broadcasting.`,
-  );
+console.log(
+  `Funding: requires ${formatEther(required)} AVAX = ${remainingGas} gas x ${formatGwei(maxFeePerGas)} gwei max fee x ${Number(GAS_HEADROOM_PERCENT) / 100} (${formatEther(gasCost)} AVAX) + ${formatEther(remainingValue)} AVAX sent by the plan. Balance: ${formatEther(balance)} AVAX.`,
+);
 if (uncommitted.length)
   console.log(`Uncommitted deployment inputs: ${uncommitted.join(", ")}`);
-if (changedArtifacts.length)
-  console.log(
-    `These artifacts differ from the build deployment ${manifest.deploymentId} started with (commit ${manifest.source.commit}): ${changedArtifacts.join(", ")}`,
-  );
 if (legacyIntents.length)
   console.log(
     `Ignoring ${legacyIntents.length} unbound intent file(s) written by an older script directly in ${intentsRoot}/. They are never reused; check on the explorer that none is pending before archiving them.`,
   );
-if (!broadcast) {
+/** Mirrors AlpineChainlinkOracle.price(): reference markets cannot be created on a stale feed. */
+async function checkFeed() {
+  const feed = manifest.chainlinkFeed;
+  const [code, block] = await Promise.all([
+    c.getCode({ address: feed }),
+    c.getBlock(),
+  ]);
+  if (!code || code === "0x") return `no contract at chainlinkFeed ${feed}`;
+  const abi = parseAbi([
+    "function decimals() view returns (uint8)",
+    "function latestRoundData() view returns (uint80, int256, uint256, uint256, uint80)",
+  ]);
+  const [decimals, [round, answer, , updatedAt, answeredInRound]] =
+    await Promise.all([
+      c.readContract({ address: feed, abi, functionName: "decimals" }),
+      c.readContract({ address: feed, abi, functionName: "latestRoundData" }),
+    ]);
+  const age = block.timestamp - updatedAt;
+  const maxAge = BigInt(manifest.maxPriceAge);
   console.log(
-    "Read-only preflight complete. --broadcast is required to spend test AVAX.",
+    `Chainlink AVAX/USD ${feed}: ${formatUnits(answer, decimals)}, updated ${age}s ago (maxPriceAge ${maxAge}s).`,
   );
-  process.exit(0);
+  if (
+    answer <= 0n ||
+    answeredInRound < round ||
+    updatedAt === 0n ||
+    updatedAt > block.timestamp
+  )
+    return "the Chainlink feed's latest round is invalid or incomplete";
+  if (age > maxAge)
+    return `the Chainlink feed was last updated ${age}s ago, beyond maxPriceAge ${maxAge}s, so reference market creation would revert; retry after its next update`;
+  if (age + 300n > maxAge)
+    console.log(
+      "Warning: the feed may go stale before reference markets are created. A stale feed stops the run before signing that step; resume after the next update.",
+    );
+  return null;
 }
-if (balance < 10n ** 17n)
-  throw new Error(
-    "Need at least 0.1 faucet-funded Fuji AVAX for gas plus 0.02 test AVAX exchange inventory. No real-money funding is permitted.",
+const blockers = [];
+if (balance < required)
+  blockers.push(
+    `balance ${formatEther(balance)} AVAX is below the required ${formatEther(required)} AVAX; fund ${account.address} with faucet test AVAX only`,
   );
+if (REFERENCE_MARKETS.some((field) => !manifest[field])) {
+  const feedProblem = await checkFeed();
+  if (feedProblem) blockers.push(feedProblem);
+}
 if (provenance.stale.length)
-  throw new Error(
-    "Refusing to broadcast artifacts that do not match the current sources.",
+  blockers.push(
+    `contracts/out was not compiled from the current sources (${provenance.stale.join(", ")}); rebuild with npm run test:contracts`,
   );
 if (!commit)
-  throw new Error(
-    "Cannot read the git commit; deploy from a git checkout so the manifest records its source.",
+  blockers.push(
+    "cannot read the git commit; deploy from a git checkout so the manifest records its source",
   );
 if (uncommitted.some((path) => path.startsWith("contracts/")))
+  blockers.push(
+    "contract sources have uncommitted changes; commit them so the recorded commit reproduces the bytecode",
+  );
+if (manifest.deploymentId && changedArtifacts.length)
+  blockers.push(
+    `these artifacts differ from the build deployment ${manifest.deploymentId} started with at ${manifest.source.commit}: ${changedArtifacts.join(", ")}; check out that commit and rebuild, or start over (docs/OPERATIONS.md, "Starting over")`,
+  );
+if (!broadcast) {
+  console.log(
+    blockers.length
+      ? `Preflight: not ready to broadcast.\n${blockers.map((b) => `  - ${b}`).join("\n")}`
+      : "Preflight: ready. --broadcast is required to spend test AVAX.",
+  );
+  process.exit(blockers.length ? 1 : 0);
+}
+if (blockers.length)
   throw new Error(
-    "Commit contract changes before broadcasting so the recorded commit reproduces the bytecode.",
+    `Not broadcasting; nothing was sent.\n${blockers.map((b) => `  - ${b}`).join("\n")}`,
   );
 const w = createWalletClient({
   account,
@@ -183,11 +260,7 @@ const source = {
 if (manifest.deploymentId && !manifest.source) {
   manifest.source = source;
   save();
-} else if (manifest.deploymentId && changedArtifacts.length)
-  throw new Error(
-    `Check out commit ${manifest.source.commit} and rebuild to resume deployment ${manifest.deploymentId}, or start over (docs/OPERATIONS.md, "Starting over"). Nothing was sent.`,
-  );
-else if (manifest.deploymentId && manifest.source.commit !== commit)
+} else if (manifest.deploymentId && manifest.source.commit !== commit)
   console.log(
     `Resuming deployment ${manifest.deploymentId} (started at ${manifest.source.commit}) from ${commit}; its artifacts are identical.`,
   );

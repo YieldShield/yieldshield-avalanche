@@ -122,7 +122,7 @@ export async function setupMarkets({
     a.wrapper.abi,
     "deposit",
     [],
-    10n ** 16n,
+    exchangeInventory.wrapper,
   );
   await run("factory-cash-approve", m.backingToken, a.token.abi, "approve", [
     m.factory,
