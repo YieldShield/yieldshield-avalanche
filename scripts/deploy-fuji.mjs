@@ -48,10 +48,10 @@ const DEADLINE_WINDOW = 3600n;
 /** An unsent intent this close to its deadline is re-signed instead of rebroadcast. */
 const DEADLINE_MARGIN = 300n;
 /**
- * Sum of the gas limits of all 26 plan steps (24.49M; 24.25M used), measured by a full
+ * Sum of the gas limits of all 26 plan steps (24.77M; 24.52M used), measured by a full
  * broadcast against a chain-43113 Anvil. Remeasure when contracts or the plan change.
  */
-const PLAN_GAS = 24_500_000n;
+const PLAN_GAS = 24_800_000n;
 const GAS_HEADROOM_PERCENT = 130n;
 /** Markets whose creation reads the Chainlink-backed reference oracle. */
 const REFERENCE_MARKETS = ["referencePool", "wrappedPool", "vaultBackingPool"];
