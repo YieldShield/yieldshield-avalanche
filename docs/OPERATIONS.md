@@ -52,7 +52,7 @@ At maturity the remaining protected asset and any upside are forfeited for the f
 
 ## Reproducible local evidence
 
-- Solidity suite: 32 tests, including two 256 case fuzz regressions and specific fairness, expiry, partial-exit, rewards, transfer, factory, vault-unit, funding and deadline cases.
+- Solidity suite: 41 tests, including three 256 case fuzz regressions and specific fairness, expiry, partial-exit, rewards, reward-index solvency, open-position slots, factory slot limits, events, transfer, vault-unit, funding and deadline cases.
 - Exact-unit math: 5 tests, including tiny minimum-output rounding.
 - Public browser suite: direct routes at390px, nested funding continuation, Back/Forward, invalid pool rejection, missing-wallet feedback, scenario interaction, storage denial, and account/network resets.
 - Local signed lifecycle: 48 confirmed transactions, source hashes in `docs/evidence/local-journey.json`, explicitly chain 31337. No Fuji broadcast.

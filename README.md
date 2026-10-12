@@ -33,7 +33,7 @@ All pages have direct URLs, including `/protect`, `/provide`, `/markets`, `/pool
 
 ## Material economic differences
 
-Provider entry/redemption **freezes while any protected position remains open**, preventing unrealized-loss NAV arbitrage. A finite, immutable epoch bounds this freeze: anyone can settle each remaining position after maturity. Forced settlement surrenders the remaining asset and its upside for the fixed entry-backing claim. Default epochs last seven days; factory-created epochs allow 1–30 days. Notice does not guarantee immediate liquidity.
+Provider entry/redemption **freezes while any protected position remains open**, preventing unrealized-loss NAV arbitrage. A finite, immutable epoch bounds this freeze: anyone can settle each remaining position after maturity. Forced settlement surrenders the remaining asset and its upside for the fixed entry-backing claim. Featured markets use the 30-day maximum epoch; factory-created epochs allow 1–30 days. Matured markets are shown as closed and need replacements. Notice does not guarantee immediate liquidity.
 
 Partial exits preserve the proportional entry basis of the remaining position. Fees apply only to positive gains on the withdrawn slice. Rewards, creator/protocol fees, surrendered principal and unclaimed backing are separately accounted. A vault-backed floor is a fixed number of bvaDEMO receipts; the underlying aDEMO redeemable for those receipts can change. There is no fixed dollar guarantee or promised yield.
 
