@@ -172,9 +172,13 @@ test("an in-flight quote cannot revive a previous asset review", async ({
     arrived = new Promise<void>((r) => (intercepted = r));
   await page.route("http://127.0.0.1:8547/", async (route) => {
     const body = route.request().postDataJSON();
+    // Local reads may arrive as JSON-RPC batches.
     if (
-      body.method === "eth_call" &&
-      body.params?.[0]?.to?.toLowerCase() === m.exchange.toLowerCase()
+      (Array.isArray(body) ? body : [body]).some(
+        (call: any) =>
+          call.method === "eth_call" &&
+          call.params?.[0]?.to?.toLowerCase() === m.exchange.toLowerCase(),
+      )
     ) {
       intercepted();
       await held;

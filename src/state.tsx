@@ -118,7 +118,8 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
     [loading, setLoading] = useState(false),
     [chainTime, setChainTime] = useState(0n),
     [activity, setActivity] = useState<Activity[]>(stored);
-  const latestRead = useRef(createLatestRead());
+  const latestRead = useRef(createLatestRead()),
+    readsInFlight = useRef(0);
   const generation = useRef(0),
     currentAccount = useRef<Address | null>(null);
   const ready = Boolean(
@@ -159,6 +160,14 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
   }, []);
   const refresh = useCallback(async () => {
     if (!ready) return;
+    readsInFlight.current++;
+    try {
+      await readAll();
+    } finally {
+      readsInFlight.current--;
+    }
+  }, [ready]);
+  const readAll = async () => {
     const isLatestRead = latestRead.current.begin();
     const generationAtStart = generation.current,
       owner = currentAccount.current;
@@ -178,22 +187,27 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
         factoryAbi,
         "allPools",
       )) as Address[];
-      for (const address of registry) {
-        if (
-          catalog.some(
+      const community = registry.filter(
+        (address) =>
+          !catalog.some(
             (m) => m.address?.toLowerCase() === address.toLowerCase(),
-          )
-        )
-          continue;
-        const [asset, backing, oracle] = await Promise.all(
-          ["protectedToken", "backing", "oracle"].map((n) =>
-            read(address, poolAbi, n),
           ),
-        );
+      );
+      const details = await Promise.all(
+        community.map((address) =>
+          Promise.all(
+            ["protectedToken", "backing", "oracle"].map((n) =>
+              read(address, poolAbi, n),
+            ),
+          ),
+        ),
+      );
+      community.forEach((address, i) => {
+        const [asset, backing, oracle] = details[i];
         const item = assets.find(
           (a) => a.address?.toLowerCase() === asset.toLowerCase(),
         );
-        if (!item) continue;
+        if (!item) return;
         catalog.push({
           key: address,
           name: `Community ${item.symbol}`,
@@ -207,7 +221,7 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
           oracle,
           source: "Factory-approved oracle",
         });
-      }
+      });
     } catch (e) {
       issues.registry = safeError(e);
     }
@@ -344,11 +358,20 @@ export function AlpineProvider({ children }: { children: ReactNode }) {
       setErrors(issues);
       setLoading(false);
     }
-  }, [ready]);
+  };
   useEffect(() => {
     void refresh();
-    const timer = setInterval(() => void refresh(), 20000);
-    return () => clearInterval(timer);
+    // Background polling never supersedes a read still in flight (a slow RPC would otherwise
+    // never publish) and pauses while the tab is hidden. Explicit refreshes still supersede.
+    const poll = () => {
+      if (!document.hidden && readsInFlight.current === 0) void refresh();
+    };
+    const timer = setInterval(poll, 20000);
+    document.addEventListener("visibilitychange", poll);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", poll);
+    };
   }, [refresh, account]);
   function disconnect() {
     generation.current++;

@@ -25,9 +25,19 @@ export const config: Record<string, any> = localMode
   ? JSON.parse(import.meta.env.VITE_LOCAL_MANIFEST)
   : deployment;
 export const chain = localMode ? foundry : avalancheFuji;
+// Fuji has Multicall3, so concurrent reads are aggregated into a few eth_calls.
+// The local chain has none, so its reads share JSON-RPC batches instead.
+const multicall = Boolean(
+  (chain as { contracts?: { multicall3?: unknown } }).contracts?.multicall3,
+);
 export const client = createPublicClient({
   chain,
-  transport: http(config.rpcUrl, { timeout: 12000, retryCount: 1 }),
+  batch: multicall ? { multicall: true } : undefined,
+  transport: http(config.rpcUrl, {
+    timeout: 12000,
+    retryCount: 1,
+    batch: !multicall,
+  }),
 });
 export const poolAbi = pool as Abi,
   factoryAbi = factory as Abi,
