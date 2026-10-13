@@ -38,6 +38,17 @@ The seed faucet provides 10,000 aDEMO. Each vault receives a real 1,000 aDEMO de
 
 The factory registers at most 32 markets. Ten slots are reserved for the protocol account (featured markets and their replacements after maturity); community wallets share the other 22, at most two per wallet. Each market allows at most 100 concurrently open positions and a 0.01 backing-unit minimum entry claim. Closed positions free their slot. It allows approved asset/oracle/backing combinations and bounded immutable terms; no arbitrary token can be listed. The factory's 500 unit seed is provider capital, not a listing fee. Fixed epochs are not renewed automatically. Featured markets therefore use the 30-day contract maximum (`epochSeconds` 2,592,000) and mature 30 days after creation. `verify:fuji` prints each closing date and fails once a featured market can no longer accept protection, which means replacement markets are needed. Custom markets keep their creator's 1–30 day choice.
 
+### Replacing featured markets
+
+Epochs cannot be extended, so matured featured markets are replaced by new ones with the recorded terms. Run the round within seven days of the earliest featured market's closing date. Each round spends five of the factory's 32 lifetime slots, so earlier runs are refused unless `--force` is passed:
+
+1. `npm run deploy:fuji -- --replace-featured` runs the read-only preflight: deployment verified, earliest closing date, free factory slots, Chainlink freshness and the signer's test AVAX for the measured 14.45M gas.
+2. `npm run deploy:fuji -- --replace-featured --broadcast` opens round `n` in `replacements` and signs its steps as `r<n>-…` intents, using the same binding and resume rules as the deployment. When the round opens, it decides whether the deployer needs a faucet claim or a bvaDEMO deposit to cover the 2,000 aDEMO and 500 bvaDEMO seeds. A rerun resumes the open round without `--force`.
+3. The manifest keeps naming the current markets until all five replacements exist, then switches the featured fields and records the superseded addresses in `replacements[n].retired`. Superseded markets stay registered and show as closed after maturity, and their open positions remain settleable.
+4. `npm run verify:fuji` checks the new markets against their `r<n>-` creation receipts. Then build and publish the website so the featured list uses the new addresses.
+
+The signer must be the deployer recorded in the manifest. Its protocol slots are the only ones replacements can use once community wallets fill theirs.
+
 ## Website and wallet behavior
 
 `npm run build` produces `dist/`. Public identities live in `config/deployment.json`; no secret environment variable is needed. Vercel's local environment files remain excluded. Deep routes rewrite to the SPA entrypoint. The app verifies wallet chain/account, rejects unknown market selections, discards stale asynchronous reviews, uses exact approvals, binds price limits and transaction deadlines, and records transaction hashes before waiting for confirmation.
