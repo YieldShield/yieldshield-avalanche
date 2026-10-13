@@ -62,7 +62,7 @@ Development-wallet setup and test evidence are separate commits from these appli
 
 Native lifecycle receipts remain in [local-journey.json](evidence/local-journey.json). The final application source and production deployment are recorded in [HOSTING.md](HOSTING.md).
 
-Grant applications remain held for user review. This is functional verification, not a security audit.
+This is functional verification, not a security audit.
 
 ## Fuji E2E, 12 October 2026
 

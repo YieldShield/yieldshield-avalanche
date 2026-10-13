@@ -14,7 +14,7 @@ Reviewed 11 October 2026. Scope: the Avalanche application, preserving its Alpin
 
 The production app showed eleven primary sidebar destinations. Desktop page word counts were 264 for Protect, 351 for Trade and 255 for Provide. These measure `document.body.innerText` split on whitespace across the whole rendered page, including navigation, numerals, labels and footer, without a connected wallet and with the default market. They are a density comparison, not a claim about user testing. [Baseline data](evidence/ui-simplification/baseline.json).
 
-Fuji deployment stays deferred and the application continues to show that status. The existing contract and transaction verification remains documented in [E2E_REPORT.md](E2E_REPORT.md). Grant submissions remain held for user review.
+Fuji deployment stays deferred and the application continues to show that status. The existing contract and transaction verification remains documented in [E2E_REPORT.md](E2E_REPORT.md).
 
 ## Implementation and checks
 

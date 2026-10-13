@@ -22,4 +22,4 @@ Published application: `c539d9218880c76ef1c87584a4fc850302f6c7b2` at https://ava
 - The deployed protection page and mobile menu were verified again after publication. No horizontal document overflow occurred at 390px and every expanded menu link measured 44px high. The final public browser console had no recorded errors.
 - [Published desktop](evidence/ui-protect-desktop.jpg) and [published mobile](evidence/ui-protect-mobile.jpg) screenshots show the updated protection route.
 
-No contract, deployment manifest or grant-application changes were made. Fuji broadcasting remains deferred, and public wallet actions remain gated until deployment is verified. Wallet transactions were not executed in this UI pass; the earlier local native lifecycle evidence is separate. Both grant applications remain held for user review.
+No contract or deployment manifest changes were made. Fuji broadcasting remains deferred, and public wallet actions remain gated until deployment is verified. Wallet transactions were not executed in this UI pass; the earlier local native lifecycle evidence is separate. Both grant applications remain held for user review.

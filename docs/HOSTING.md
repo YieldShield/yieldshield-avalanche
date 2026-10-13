@@ -30,4 +30,4 @@ This is a static Vite application. Build with `npm run build`, output `dist`. Ho
 
 Fuji contracts were deployed and verified on 12 October 2026 after the owner resumed the deferred deployment. See [operations](OPERATIONS.md) for the explicit broadcast and verification procedure. The displayed reference price and local test receipts must not be described as a completed public-chain contract deployment.
 
-Later documentation and screenshot commits do not alter the application source deployed above. Grant submissions remain on hold for user review.
+Later documentation and screenshot commits do not alter the application source deployed above.
