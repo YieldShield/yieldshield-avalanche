@@ -1,5 +1,11 @@
 # Security and economic boundaries
 
+## Reporting a vulnerability
+
+Please report suspected vulnerabilities privately, not in a public issue: use **Report a vulnerability** on this repository's Security tab (GitHub private vulnerability reporting), or email david@yieldshield.ai. Include the affected contract and function or page, steps to reproduce and the expected impact. Never send private keys or seed phrases. This is unaudited testnet software that holds no assets of monetary value; there is no bug bounty.
+
+## Scope
+
 This is unaudited testnet software. Asset-moving contracts accept only local chain 31337 or Fuji43113. No asset of monetary value belongs here.
 
 ## Accounting properties
