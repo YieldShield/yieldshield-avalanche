@@ -1,5 +1,7 @@
 # Navigation and content simplification
 
+> Historical review from 11 October 2026, when Fuji contracts were not yet deployed. They were deployed and verified on 12 October 2026; see [HOSTING.md](HOSTING.md) for the current release.
+
 Reviewed 11 October 2026. Scope: the Avalanche application, preserving its Alpine identity and all existing workflows.
 
 ## Research and decisions

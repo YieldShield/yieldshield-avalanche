@@ -30,6 +30,6 @@ The asset set is native Fuji AVAX, the explicitly named Alpine test wrapper `awA
 
 ## Release boundary
 
-The website exposes all workflows, but Fuji contracts remain **undeployed** under the user's instruction to prepare deployment for later. Public write controls remain disabled. Local contract/lifecycle evidence is not evidence of Fuji deployment. See the build and operations records for exact tests and the future broadcast procedure.
+When this comparison was made, Fuji contracts were not yet deployed and public writes were disabled. They were deployed and verified on 12 October 2026, and the website now enables writes against that deployment; see [OPERATIONS.md](OPERATIONS.md) and the [Fuji E2E](E2E_REPORT.md#fuji-e2e-12-october-2026). Local contract/lifecycle evidence is still not evidence of Fuji activity.
 
 Browser acceptance covered the separate protection/provider pages, direct routes, market selection, funding return context, invalid-pool rejection, wallet-unavailable recovery, and desktop/mobile layouts. The later end-to-end pass completed 44 confirmed transactions through the actual browser application with an isolated local wallet, plus 48 separately scripted local-chain transactions. [E2E_REPORT.md](E2E_REPORT.md) records lifecycle, race and recovery coverage. Actual wallet-extension approval screens remain unverified.

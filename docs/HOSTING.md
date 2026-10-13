@@ -28,6 +28,6 @@ Local browser review also verified invalid-pool rejection, missing-wallet feedba
 
 This is a static Vite application. Build with `npm run build`, output `dist`. Hosting needs no server signer, API credential or database. `.vercelignore` excludes environment files, test signers, local manifests/build caches and private application drafts. `.env.local` and `.vercel/` are ignored local hosting metadata and must never be committed. Local-chain mode additionally requires Vite development mode and cannot activate in this production build. Existing deployment protection was retained; the custom production domain remains public.
 
-Fuji contracts were deployed and verified on 12 October 2026 after the owner resumed the deferred deployment. See [operations](OPERATIONS.md) for the explicit broadcast and verification procedure. The displayed reference price and local test receipts must not be described as a completed public-chain contract deployment.
+Fuji contracts were deployed and verified on 12 October 2026, when the deferred deployment was resumed. See [operations](OPERATIONS.md) for the explicit broadcast and verification procedure. The displayed reference price and local test receipts must not be described as a completed public-chain contract deployment.
 
 Later documentation and screenshot commits do not alter the application source deployed above.

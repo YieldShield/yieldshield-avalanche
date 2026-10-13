@@ -1,5 +1,7 @@
 # UI review — 11 October 2026
 
+> Historical review from 11 October 2026, when Fuji contracts were not yet deployed. They were deployed and verified on 12 October 2026; see [HOSTING.md](HOSTING.md) for the current release.
+
 Published application: `c539d9218880c76ef1c87584a4fc850302f6c7b2` at https://avalanche.yieldshield.ai. Vercel deployment `dpl_DBwk4uJNNiyaQWT8J3ptTUJ6f8C8` is READY; repository, branch, exact commit and custom-domain alias were verified. The later repository-banner merge and evidence commits contain no application changes.
 
 ## Fixes committed separately
