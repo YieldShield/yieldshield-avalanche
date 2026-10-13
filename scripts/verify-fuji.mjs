@@ -218,7 +218,13 @@ for (const [field, asset, backing] of [
   if (maturity - now < 3n * day)
     console.log(`Warning: ${field} closes within three days.`);
   // The seed is checked in the creation receipt, so later public use cannot fail verification.
-  const receipt = await recordedReceipt(`${field}-factory-create`);
+  // A replacement round labels its creations `r<n>-…`; the original deployment has no prefix.
+  const replaced = (m.replacements ?? []).findLast(
+    (r) => r.completedAt && same(r.created?.[field], address),
+  );
+  const receipt = await recordedReceipt(
+    `${replaced ? `r${replaced.round}-` : ""}${field}-factory-create`,
+  );
   const created = eventsFrom(receipt, m.factory, factory, "PoolCreated");
   if (
     created.length !== 1 ||
