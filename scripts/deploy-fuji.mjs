@@ -261,6 +261,9 @@ async function replacementProblems() {
     c.readContract({ address: manifest.factory, abi: factory.abi, functionName: "allPools" }),
     c.readContract({ address: manifest.factory, abi: factory.abi, functionName: "MAX_POOLS" }),
   ]);
+  console.log(
+    `Factory market slots: ${registered.length} of ${limit} lifetime slots used; this round needs ${remaining}.`,
+  );
   if (BigInt(registered.length + remaining) > limit)
     problems.push(
       `the factory has ${registered.length} of its ${limit} lifetime market slots in use, too few for ${remaining} replacement markets`,
